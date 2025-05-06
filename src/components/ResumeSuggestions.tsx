@@ -230,6 +230,13 @@ const renderContent = (content: any): React.ReactNode => {
   return String(content);
 };
 
+const capitalizeWords = (str: string): string => {
+  return str
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+};
+
 interface ResumeSuggestionsProps {
   suggestions: Suggestion[];
   onAcceptSuggestion?: (index: number) => void;
@@ -246,7 +253,7 @@ const MobileSuggestion: React.FC<{
     <Card key={index} className="border border-muted p-3 animate-fade-in">
       <div className="mb-1.5">
         <span className="text-[10px] font-medium bg-muted px-1.5 py-0.5 rounded">
-          {suggestion.section}
+          {capitalizeWords(suggestion.section)}
         </span>
       </div>
       
@@ -302,7 +309,7 @@ const DesktopSuggestion: React.FC<{
     <Card key={index} className="border border-muted p-4 animate-fade-in">
       <div className="mb-2">
         <span className="text-xs font-medium bg-muted px-2 py-1 rounded">
-          {suggestion.section}
+          {capitalizeWords(suggestion.section)}
         </span>
       </div>
       
