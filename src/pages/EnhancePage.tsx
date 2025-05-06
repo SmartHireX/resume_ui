@@ -1,0 +1,817 @@
+import React, { useState, useRef } from "react";
+import Header from "@/components/Header";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Button } from "@/components/ui/button";
+import { CheckCircle, Download, Loader2, XCircle } from "lucide-react";
+import { toast } from "sonner";
+import ResumeUploader from "@/components/ResumeUploader";
+import ResumeSuggestions, { Suggestion } from "@/components/ResumeSuggestions";
+import ResumePreview from "@/components/ResumePreview";
+import { parseResume, getEnhancementSuggestions, EnhancementSuggestion, ATSScore, FlexibleResumeData } from "@/services/resumeService";
+import html2pdf from "html2pdf.js";
+import { useIsMobile } from "@/hooks/use-mobile";
+import Footer from "@/components/Footer";
+import { useReactToPrint } from 'react-to-print';
+import '../components/PrintStyles.css';
+
+
+// Match the ResumeData interface from ResumePreview component
+interface ResumeData {
+  personalInfo: {
+    name: string;
+    email: string;
+    phone: string;
+    location: string;
+    linkedin?: string;
+    github?: string;
+    website?: string;
+  };
+  summary: string;
+  experience: Array<{
+    title: string;
+    company: string;
+    location: string;
+    duration: string;
+    responsibilities: string[];
+    achievements: string[];
+    technologies: string[];
+  }>;
+  education: Array<{
+    qualification: string;
+    institute: string;
+    duration: string;
+    marks?: string;
+    field_of_study?: string;
+  }>;
+  projects: Array<{
+    name: string;
+    duration: string;
+    summary: string;
+    description: string | null;
+    deliverables: string[];
+    technologies: string[];
+  }>;
+  certifications: Array<{
+    title: string;
+    institution: string;
+    date: string;
+  }>;
+  achievements: string[];
+  skills: {
+    programming_languages: string[];
+    databases: string[];
+    technologies: string[];
+    frameworks: string[];
+    tools: string[];
+    soft_skills: string[];
+    other: string[];
+  };
+  languages_known: string[];
+  publications: string[];
+  awards: string[];
+  volunteer_experience: string[];
+  interests: string[];
+  [key: string]: any;
+}
+
+const convertApiSuggestionsToAppFormat = (suggestions: EnhancementSuggestion[]): Suggestion[] => {
+  return suggestions.map(suggestion => ({
+    section: suggestion.section,
+    original: suggestion.original,
+    improved: suggestion.improved,
+    reason: suggestion.reason
+  }));
+};
+
+const DesktopLayout: React.FC<{
+  children: React.ReactNode;
+  resumePreviewRef: React.RefObject<HTMLDivElement>;
+  resumeData: ResumeData | null;
+  isLoading: boolean;
+}> = ({ children, resumePreviewRef, resumeData, isLoading }) => {
+  return (
+    <section className="split-layout">
+      <div className="description-side bg-muted/30 h-[93%] p-8">
+        <div className="h-full w-full flex items-center justify-center p-6">
+          <div ref={resumePreviewRef} className="resume-preview w-full h-[70vh] rounded-lg shadow-sm overflow-hidden">
+            {isLoading ? (
+              <div className="w-full h-full flex items-center justify-center bg-card text-card-foreground">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <span className="ml-2 text-sm">Parsing resume...</span>
+              </div>
+            ) : (
+              <ResumePreview resumeData={resumeData as any} />
+            )}
+          </div>
+        </div>
+      </div>
+      <div className="upload-side h-[93%]">
+        <div className="flex flex-col justify-center w-full max-w-[53rem] px-4 h-[42rem]">
+          {children}
+        </div>
+      </div>
+    </section>
+  );
+};
+
+const MobileLayout: React.FC<{
+  children: React.ReactNode;
+  resumePreviewRef: React.RefObject<HTMLDivElement>;
+  resumeData: ResumeData | null;
+  isLoading: boolean;
+}> = ({ children, resumePreviewRef, resumeData, isLoading }) => {
+  return (
+    <section className="flex flex-col">
+      <div className="p-2 bg-muted/30 border-b border-border/50">
+        <div ref={resumePreviewRef} className="w-full h-[38vh] rounded-lg shadow-sm overflow-hidden">
+          {isLoading ? (
+            <div className="w-full h-full flex flex-col items-center justify-center bg-card text-card-foreground">
+              <Loader2 className="h-5 w-5 animate-spin text-primary mb-2" />
+              <span className="text-xs">Parsing resume...</span>
+            </div>
+          ) : (
+            <ResumePreview resumeData={resumeData as any} />
+          )}
+        </div>
+      </div>
+      <div className="p-3 flex-1 overflow-y-auto safe-area-padding-bottom pb-20">
+        <div className="w-full">
+          {children}
+        </div>
+      </div>
+    </section>
+  );
+};
+
+const EnhancePage = () => {
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [resumeData, setResumeData] = useState<ResumeData | null>(null);
+  const [showEnhancements, setShowEnhancements] = useState(false);
+  const [jobDescription, setJobDescription] = useState("");
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+  const [atsScore, setAtsScore] = useState<ATSScore | undefined>(undefined);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isGeneratingSuggestions, setIsGeneratingSuggestions] = useState(false);
+  const [allSuggestionsDone, setAllSuggestionsDone] = useState(false);
+  const resumePreviewRef = useRef<HTMLDivElement>(null);
+  const isMobile = useIsMobile();
+
+  const handleFileUpload = async (file: File) => {
+    setUploadedFile(file);
+    setIsLoading(true);
+
+    try {
+      const parsedResumeData = await parseResume(file);
+
+      // Ensure parsedResumeData has the structure expected by ResumePreview
+      const formattedResumeData: ResumeData = {
+        personalInfo: parsedResumeData.personalInfo,
+        summary: parsedResumeData.summary || "",
+        experience: Array.isArray(parsedResumeData.experience) ? parsedResumeData.experience.map(exp => ({
+          ...exp,
+          location: exp.location || "",
+          achievements: Array.isArray(exp.achievements) ? exp.achievements : [],
+          technologies: Array.isArray(exp.technologies) ? exp.technologies : []
+        })) : [],
+        education: Array.isArray(parsedResumeData.education) ? parsedResumeData.education : [],
+        projects: Array.isArray(parsedResumeData.projects) ? parsedResumeData.projects.map(project => ({
+          ...project,
+          summary: project.summary || "",
+          description: project.description || null,
+          deliverables: Array.isArray(project.deliverables) ? project.deliverables : [],
+          technologies: Array.isArray(project.technologies) ? project.technologies : []
+        })) : [],
+        certifications: Array.isArray(parsedResumeData.certifications) ? parsedResumeData.certifications : [],
+        achievements: Array.isArray(parsedResumeData.achievements) ? parsedResumeData.achievements : [],
+        skills: parsedResumeData.skills || {
+          programming_languages: [],
+          databases: [],
+          technologies: [],
+          frameworks: [],
+          tools: [],
+          soft_skills: [],
+          other: []
+        },
+        languages_known: Array.isArray(parsedResumeData.languages_known) ? parsedResumeData.languages_known : [],
+        publications: Array.isArray(parsedResumeData.publications) ? parsedResumeData.publications : [],
+        awards: Array.isArray(parsedResumeData.awards) ? parsedResumeData.awards : [],
+        volunteer_experience: Array.isArray(parsedResumeData.volunteer_experience) ? parsedResumeData.volunteer_experience : [],
+        interests: Array.isArray(parsedResumeData.interests) ? parsedResumeData.interests : [],
+      };
+
+      setResumeData(formattedResumeData);
+      toast("Resume uploaded successfully", {
+        description: "Now add the job description you're targeting",
+      });
+    } catch (error) {
+      console.error("Error parsing resume:", error);
+      toast("Error parsing resume", {
+        description: "Please try uploading again",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleEnhanceResume = async (jobDesc: string) => {
+    if (!resumeData) return;
+
+    setJobDescription(jobDesc);
+    setIsGeneratingSuggestions(true);
+
+    try {
+      // Convert to the format expected by the API
+      const apiResumeData = {
+        personalInfo: resumeData.personalInfo,
+        summary: resumeData.summary,
+        experience: resumeData.experience.map(exp => ({
+          title: exp.title,
+          company: exp.company,
+          location: exp.location,
+          duration: exp.duration,
+          responsibilities: exp.responsibilities,
+          achievements: exp.achievements,
+          technologies: exp.technologies
+        })),
+        education: resumeData.education,
+        projects: resumeData.projects,
+        skills: resumeData.skills,
+        certifications: resumeData.certifications,
+        achievements: resumeData.achievements,
+        languages_known: resumeData.languages_known
+      } as unknown as FlexibleResumeData;
+
+      const enhancementResponse = await getEnhancementSuggestions(apiResumeData, jobDesc);
+      setSuggestions(convertApiSuggestionsToAppFormat(enhancementResponse.suggestions));
+      setAtsScore(enhancementResponse.atsScore);
+      setShowEnhancements(true);
+      setAllSuggestionsDone(false);
+    } catch (error) {
+      console.error("Error generating suggestions:", error);
+      toast("Error generating suggestions", {
+        description: "Please try again",
+      });
+    } finally {
+      setIsGeneratingSuggestions(false);
+    }
+  };
+
+  const handleAcceptSuggestion = (index: number) => {
+    if (!resumeData) return;
+
+    const suggestion = suggestions[index];
+    console.log("Applying suggestion:", suggestion);
+
+    const updatedResumeData = { ...resumeData };
+
+    switch (suggestion.section.toLowerCase()) {
+      case "summary":
+        if (suggestion.improved) {
+          updatedResumeData.summary = suggestion.improved;
+        }
+        break;
+      case "experience":
+        // Handle experience improvements
+        if (typeof suggestion.original === 'object' && typeof suggestion.improved === 'object' && suggestion.improved !== null) {
+          console.log("Original experience:", suggestion.original);
+          console.log("Improved experience:", suggestion.improved);
+
+          // Check if the experience data is an array (multiple entries)
+          if (Array.isArray(suggestion.improved)) {
+            // Replace all experience entries with the improved ones
+            updatedResumeData.experience = suggestion.improved.map((improvExp: any) => ({
+              title: improvExp.title || "",
+              company: improvExp.company || "",
+              duration: improvExp.duration || "",
+              location: improvExp.location || "",
+              responsibilities: Array.isArray(improvExp.responsibilities) ? improvExp.responsibilities : [],
+              achievements: Array.isArray(improvExp.achievements) ? improvExp.achievements : [],
+              technologies: Array.isArray(improvExp.technologies) ? improvExp.technologies : []
+            }));
+            console.log("Updated all experience entries", updatedResumeData.experience);
+          } else {
+            // Single experience object
+            const origExp = suggestion.original as any;
+            const improvedExp = suggestion.improved as any;
+
+            // Find the matching experience entry
+            const expIndex = updatedResumeData.experience.findIndex(exp =>
+              exp.title === origExp.title &&
+              exp.company === origExp.company
+            );
+
+            if (expIndex !== -1) {
+              // Create a new object that combines the existing experience with improved fields
+              const existingExp = updatedResumeData.experience[expIndex];
+              const updatedExp = {
+                ...existingExp,
+                title: improvedExp.title || existingExp.title,
+                company: improvedExp.company || existingExp.company,
+                duration: improvedExp.duration || existingExp.duration,
+                location: improvedExp.location || existingExp.location || "",
+                technologies: Array.isArray(improvedExp.technologies)
+                  ? improvedExp.technologies
+                  : existingExp.technologies
+              };
+
+              // Handle the responsibilities array specifically since it's a common field to update
+              if (Array.isArray(improvedExp.responsibilities)) {
+                updatedExp.responsibilities = [...improvedExp.responsibilities];
+              }
+
+              // Handle achievements if they exist in the improved experience
+              if (Array.isArray(improvedExp.achievements)) {
+                updatedExp.achievements = [...improvedExp.achievements];
+              }
+
+              updatedResumeData.experience[expIndex] = updatedExp;
+              console.log("Updated experience:", updatedResumeData.experience[expIndex]);
+            } else {
+              // If experience not found but we have complete data, create a new entry
+              console.log("Experience not found, creating new entry if possible");
+              if (improvedExp.title && improvedExp.company && improvedExp.duration) {
+                const newExp = {
+                  title: improvedExp.title,
+                  company: improvedExp.company,
+                  duration: improvedExp.duration,
+                  location: improvedExp.location || "",
+                  responsibilities: Array.isArray(improvedExp.responsibilities) ? improvedExp.responsibilities : [],
+                  achievements: Array.isArray(improvedExp.achievements) ? improvedExp.achievements : [],
+                  technologies: Array.isArray(improvedExp.technologies) ? improvedExp.technologies : []
+                };
+                updatedResumeData.experience.push(newExp);
+                console.log("Added new experience:", newExp);
+              }
+            }
+          }
+        }
+        break;
+      case "skills":
+        // Handle skills category improvements
+        if (typeof suggestion.original === 'object' && typeof suggestion.improved === 'object' && suggestion.improved !== null) {
+          console.log("Original skills:", suggestion.original);
+          console.log("Improved skills:", suggestion.improved);
+
+          const improvedSkills = suggestion.improved as any;
+
+          // Check that improvedSkills has the expected properties
+          if (improvedSkills.programming_languages ||
+            improvedSkills.databases ||
+            improvedSkills.technologies ||
+            improvedSkills.frameworks ||
+            improvedSkills.tools ||
+            improvedSkills.soft_skills ||
+            improvedSkills.other) {
+
+            // Update each skill category if it exists
+            const skillCategories = [
+              'programming_languages', 'databases', 'technologies',
+              'frameworks', 'tools', 'soft_skills', 'other'
+            ];
+
+            skillCategories.forEach(category => {
+              if (Array.isArray(improvedSkills[category])) {
+                updatedResumeData.skills[category] = [...improvedSkills[category]];
+              }
+            });
+
+            console.log("Updated skills:", updatedResumeData.skills);
+          }
+        }
+        break;
+      case "projects":
+        // Handle project improvements
+        if (typeof suggestion.original === 'object' && typeof suggestion.improved === 'object' && suggestion.improved !== null) {
+          console.log("Original project:", suggestion.original);
+          console.log("Improved project:", suggestion.improved);
+
+          // Check if the project data is an array
+          if (Array.isArray(suggestion.improved)) {
+            // Replace all projects with the improved ones
+            updatedResumeData.projects = suggestion.improved.map((proj: any) => ({
+              name: proj.name || "",
+              duration: proj.duration || "",
+              summary: proj.summary || "",
+              description: proj.description || null,
+              deliverables: Array.isArray(proj.deliverables) ? proj.deliverables : [],
+              technologies: Array.isArray(proj.technologies) ? proj.technologies : []
+            }));
+            console.log("Updated all projects", updatedResumeData.projects);
+          } else {
+            // Single project object
+            const origProject = suggestion.original as any;
+            const improvedProject = suggestion.improved as any;
+
+            // Find the matching project
+            const projectIndex = updatedResumeData.projects.findIndex(proj =>
+              proj.name === origProject.name
+            );
+
+            if (projectIndex !== -1) {
+              const existingProject = updatedResumeData.projects[projectIndex];
+              // Update project properties
+              updatedResumeData.projects[projectIndex] = {
+                ...existingProject,
+                name: improvedProject.name || existingProject.name,
+                duration: improvedProject.duration || existingProject.duration,
+                description: improvedProject.description || existingProject.description,
+                summary: improvedProject.summary || existingProject.summary || "",
+                deliverables: Array.isArray(improvedProject.deliverables) ? improvedProject.deliverables : existingProject.deliverables,
+                technologies: Array.isArray(improvedProject.technologies) ? improvedProject.technologies : existingProject.technologies
+              };
+              console.log("Updated project:", updatedResumeData.projects[projectIndex]);
+            }
+          }
+        }
+        break;
+      case "education":
+        // Handle education improvements
+        if (typeof suggestion.original === 'object' && typeof suggestion.improved === 'object' && suggestion.improved !== null) {
+          console.log("Original education:", suggestion.original);
+          console.log("Improved education:", suggestion.improved);
+
+          // Check if the education data is an array
+          if (Array.isArray(suggestion.improved)) {
+            // Replace all education entries with the improved ones
+            updatedResumeData.education = suggestion.improved.map((edu: any) => ({
+              qualification: edu.qualification || "",
+              institute: edu.institute || "",
+              duration: edu.duration || "",
+              marks: edu.marks || "",
+              field_of_study: edu.field_of_study || ""
+            }));
+            console.log("Updated all education entries", updatedResumeData.education);
+          } else {
+            // Single education object
+            const origEdu = suggestion.original as any;
+            const improvedEdu = suggestion.improved as any;
+
+            // Find the matching education entry
+            const eduIndex = updatedResumeData.education.findIndex(edu =>
+              edu.qualification === origEdu.qualification &&
+              edu.institute === origEdu.institute
+            );
+
+            if (eduIndex !== -1) {
+              const existingEdu = updatedResumeData.education[eduIndex];
+              // Update education properties
+              updatedResumeData.education[eduIndex] = {
+                ...existingEdu,
+                qualification: improvedEdu.qualification || existingEdu.qualification,
+                institute: improvedEdu.institute || existingEdu.institute,
+                duration: improvedEdu.duration || existingEdu.duration,
+                marks: improvedEdu.marks || existingEdu.marks || "",
+                field_of_study: improvedEdu.field_of_study || existingEdu.field_of_study || ""
+              };
+              console.log("Updated education:", updatedResumeData.education[eduIndex]);
+            }
+          }
+        }
+        break;
+      default:
+        // For any other section, attempt to directly update it if it exists
+        if (updatedResumeData[suggestion.section.toLowerCase()] && suggestion.improved) {
+          updatedResumeData[suggestion.section.toLowerCase()] = suggestion.improved;
+        }
+    }
+
+    setResumeData(updatedResumeData);
+
+    const updatedSuggestions = [...suggestions];
+    updatedSuggestions.splice(index, 1);
+    setSuggestions(updatedSuggestions);
+
+    if (updatedSuggestions.length === 0) {
+      setAllSuggestionsDone(true);
+      toast("All suggestions applied!", {
+        description: "Your resume is now ready to download",
+      });
+    } else {
+      toast("Suggestion applied", {
+        description: `Updated ${suggestion.section}`,
+      });
+    }
+  };
+
+  const handleRejectSuggestion = (index: number) => {
+    const updatedSuggestions = [...suggestions];
+    updatedSuggestions.splice(index, 1);
+    setSuggestions(updatedSuggestions);
+
+    if (updatedSuggestions.length === 0) {
+      setAllSuggestionsDone(true);
+      toast("All suggestions processed!", {
+        description: "Your resume is now ready to download",
+      });
+    } else {
+      toast("Suggestion ignored", {
+        description: "You can continue with remaining suggestions",
+      });
+    }
+  };
+
+  const handleRejectAll = () => {
+    if (!suggestions.length) return;
+
+    // Store the current suggestions length
+    const totalSuggestions = suggestions.length;
+    
+    // Clear all suggestions at once
+    setSuggestions([]);
+    setAllSuggestionsDone(true);
+
+    toast(`${totalSuggestions} suggestions rejected`, {
+      description: "Your resume remains unchanged",
+    });
+  };
+
+  const handleAcceptAll = () => {
+    if (!suggestions.length) return;
+
+    // Store the current suggestions and resume data
+    const allSuggestions = [...suggestions];
+    const updatedResumeData = { ...resumeData };
+
+    // Process all suggestions and update resume data
+    allSuggestions.forEach((suggestion) => {
+      const section = suggestion.section.toLowerCase();
+      
+      switch (section) {
+        case "summary":
+          if (suggestion.improved) {
+            updatedResumeData.summary = suggestion.improved;
+          }
+          break;
+        case "experience":
+          if (typeof suggestion.improved === 'object' && suggestion.improved !== null) {
+            if (Array.isArray(suggestion.improved)) {
+              updatedResumeData.experience = suggestion.improved.map(improvExp => ({
+                title: improvExp.title || "",
+                company: improvExp.company || "",
+                duration: improvExp.duration || "",
+                location: improvExp.location || "",
+                responsibilities: Array.isArray(improvExp.responsibilities) ? improvExp.responsibilities : [],
+                achievements: Array.isArray(improvExp.achievements) ? improvExp.achievements : [],
+                technologies: Array.isArray(improvExp.technologies) ? improvExp.technologies : []
+              }));
+            } else {
+              const improvedExp = suggestion.improved;
+              const expIndex = updatedResumeData.experience.findIndex(exp =>
+                exp.title === improvedExp.title && exp.company === improvedExp.company
+              );
+              
+              if (expIndex !== -1) {
+                updatedResumeData.experience[expIndex] = {
+                  ...updatedResumeData.experience[expIndex],
+                  ...improvedExp,
+                  responsibilities: Array.isArray(improvedExp.responsibilities) ? improvedExp.responsibilities : [],
+                  achievements: Array.isArray(improvedExp.achievements) ? improvedExp.achievements : [],
+                  technologies: Array.isArray(improvedExp.technologies) ? improvedExp.technologies : []
+                };
+              }
+            }
+          }
+          break;
+        case "skills":
+          if (typeof suggestion.improved === 'object' && suggestion.improved !== null) {
+            const improvedSkills = suggestion.improved;
+            const skillCategories = [
+              'programming_languages', 'databases', 'technologies',
+              'frameworks', 'tools', 'soft_skills', 'other'
+            ];
+
+            skillCategories.forEach(category => {
+              if (Array.isArray(improvedSkills[category])) {
+                updatedResumeData.skills[category] = [...improvedSkills[category]];
+              }
+            });
+          }
+          break;
+        case "projects":
+          if (typeof suggestion.improved === 'object' && suggestion.improved !== null) {
+            if (Array.isArray(suggestion.improved)) {
+              updatedResumeData.projects = suggestion.improved.map(proj => ({
+                name: proj.name || "",
+                duration: proj.duration || "",
+                summary: proj.summary || "",
+                description: proj.description || null,
+                deliverables: Array.isArray(proj.deliverables) ? proj.deliverables : [],
+                technologies: Array.isArray(proj.technologies) ? proj.technologies : []
+              }));
+            } else {
+              const improvedProj = suggestion.improved;
+              const projIndex = updatedResumeData.projects.findIndex(proj =>
+                proj.name === improvedProj.name
+              );
+              
+              if (projIndex !== -1) {
+                updatedResumeData.projects[projIndex] = {
+                  ...updatedResumeData.projects[projIndex],
+                  ...improvedProj,
+                  deliverables: Array.isArray(improvedProj.deliverables) ? improvedProj.deliverables : [],
+                  technologies: Array.isArray(improvedProj.technologies) ? improvedProj.technologies : []
+                };
+              }
+            }
+          }
+          break;
+        case "education":
+          if (typeof suggestion.improved === 'object' && suggestion.improved !== null) {
+            if (Array.isArray(suggestion.improved)) {
+              updatedResumeData.education = suggestion.improved.map(edu => ({
+                qualification: edu.qualification || "",
+                institute: edu.institute || "",
+                duration: edu.duration || "",
+                marks: edu.marks || "",
+                field_of_study: edu.field_of_study || ""
+              }));
+            } else {
+              const improvedEdu = suggestion.improved;
+              const eduIndex = updatedResumeData.education.findIndex(edu =>
+                edu.qualification === improvedEdu.qualification &&
+                edu.institute === improvedEdu.institute
+              );
+              
+              if (eduIndex !== -1) {
+                updatedResumeData.education[eduIndex] = {
+                  ...updatedResumeData.education[eduIndex],
+                  ...improvedEdu
+                };
+              }
+            }
+          }
+          break;
+        default:
+          // For any other section, directly update if it exists
+          if (updatedResumeData[section] && suggestion.improved) {
+            updatedResumeData[section] = suggestion.improved;
+          }
+      }
+    });
+
+    // Update resume data with all changes at once
+    setResumeData(updatedResumeData);
+    
+    // Clear all suggestions and mark as done
+    setSuggestions([]);
+    setAllSuggestionsDone(true);
+
+    toast(`${allSuggestions.length} suggestions applied!`, {
+      description: "Your resume has been fully enhanced",
+    });
+  };
+
+  const handlePrint = useReactToPrint({
+    content: () => resumePreviewRef.current,
+    documentTitle: "Enhanced Resume",
+    onBeforeGetContent: () => { toast("Preparing for print..."); },
+    onAfterPrint: () => { toast("Resume printed successfully"); },
+    onPrintError: (error) => { toast("Error printing resume", { description: "Please try again." }); }
+  });
+
+  const renderContent = () => {
+    if (allSuggestionsDone) {
+      return (
+        <div className="flex flex-col items-center justify-center py-6 space-y-4">
+          <div className="bg-primary/10 p-4 rounded-full">
+            <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+              <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+          </div>
+          <h2 className="text-xl font-bold">Resume Enhanced Successfully!</h2>
+          {atsScore && (
+            <div className="p-4 border rounded-md my-2 w-3/5">
+              <h3 className="text-sm font-semibold mb-2">ATS Score Improvement</h3>
+              <div className="flex justify-between">
+                <div className="text-center">
+                  <span className="text-xs text-muted-foreground">Original</span>
+                  <p className="text-xl font-bold">{atsScore.old}%</p>
+                </div>
+                <div className="flex items-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary">
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                    <polyline points="12 5 19 12 12 19"></polyline>
+                  </svg>
+                </div>
+                <div className="text-center">
+                  <span className="text-xs text-muted-foreground">Enhanced</span>
+                  <p className="text-xl font-bold text-primary">{atsScore.new}%</p>
+                </div>
+              </div>
+            </div>
+          )}
+          <p className="text-sm text-muted-foreground text-center">
+            All suggestions have been processed. Your resume is now optimized for the job you're targeting.
+          </p>
+
+          <Button
+            variant="default"
+            className="gap-2 text-sm sm:text-base w-full sm:w-auto mt-4"
+            onClick={() => handlePrint()}
+          >
+            <Download className="h-4 w-4 sm:h-5 sm:w-5" />
+            Download Enhanced Resume
+          </Button>
+        </div>
+      );
+    }
+
+    if (!showEnhancements) {
+      return (
+        <>
+          <h2 className="text-lg sm:text-xl font-bold mb-1 sm:mb-2 text-center">Enhance Your Resume</h2>
+          <p className="text-muted-foreground text-center mb-4 sm:mb-6 text-xs sm:text-sm">Your improved resume is just a few clicks away</p>
+
+          <ResumeUploader
+            onFileUpload={handleFileUpload}
+            onEnhanceResume={handleEnhanceResume}
+            isProcessing={isGeneratingSuggestions}
+            isResumeUploaded={!!resumeData}
+          />
+        </>
+      );
+    }
+
+    return (
+      <div className="space-y-3 sm:space-y-6 h-full">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 sm:gap-3 mb-1 sm:mb-2">
+          <h2 className="text-lg sm:text-xl font-bold">AI Suggestions</h2>
+          {atsScore && (
+            <div className="p-2 bg-muted/50 rounded-md text-xs flex items-center gap-2">
+              <span>ATS Score: <span className="line-through">{atsScore.old}%</span> → <span className="font-bold text-primary">{atsScore.new}%</span></span>
+            </div>
+          )}
+        </div>
+
+        <ScrollArea className="h-[92%] sm:h-[500px] rounded-md border">
+          <div className="p-6 sm:p-6">
+            {isGeneratingSuggestions ? (
+              <div className="flex flex-col items-center justify-center h-40 sm:h-64">
+                <Loader2 className="h-5 w-5 sm:h-8 sm:w-8 animate-spin text-primary mb-3 sm:mb-4" />
+                <p className="text-xs sm:text-sm">Generating enhancement suggestions...</p>
+              </div>
+            ) : (
+              <ResumeSuggestions
+                suggestions={suggestions}
+                onAcceptSuggestion={handleAcceptSuggestion}
+                onRejectSuggestion={handleRejectSuggestion}
+              />
+            )}
+          </div>
+        </ScrollArea>
+        <div className="flex justify-end p-4 gap-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="gap-1" 
+            onClick={handleRejectAll}
+            disabled={!suggestions.length}
+          >
+            <XCircle className="h-4 w-4" />
+            Ingore All
+          </Button>
+          <Button 
+            variant="default" 
+            size="sm" 
+            className="gap-1" 
+            onClick={handleAcceptAll}
+            disabled={!suggestions.length}
+          >
+            <CheckCircle className="h-4 w-4" />
+            Apply All
+          </Button>
+         
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="flex flex-col h-screen overflow-hidden">
+      <Header />
+      <main className="flex-grow overflow-y-auto">
+        {isMobile ? (
+          <MobileLayout
+            resumePreviewRef={resumePreviewRef}
+            resumeData={resumeData}
+            isLoading={isLoading}
+          >
+            {renderContent()}
+          </MobileLayout>
+        ) : (
+          <DesktopLayout
+            resumePreviewRef={resumePreviewRef}
+            resumeData={resumeData}
+            isLoading={isLoading}
+          >
+            {renderContent()}
+          </DesktopLayout>
+        )}
+      </main>
+      <Footer />
+    </div>
+  );
+};
+
+export default EnhancePage;

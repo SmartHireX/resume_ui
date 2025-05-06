@@ -1,0 +1,22 @@
+@media print {
+  @page {
+    size: A4;
+    margin: 2rem 1rem;
+  }
+
+  /* Remove overflow and set height for the print layout */
+  .resume-preview {
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  /* Optionally, hide unwanted elements for the print */
+  .no-print {
+    display: none !important;
+  }
+
+  /* Adjust background if needed */
+  body {
+    background-color: #ffffff; /* or any color you want for the print */
+  }
+}
