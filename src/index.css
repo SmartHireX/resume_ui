@@ -163,7 +163,7 @@
   width: 100%;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  min-height: calc(100vh - 53px);
+  height: 100%;
 }
 
 .description-side {
