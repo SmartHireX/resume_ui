@@ -58,7 +58,7 @@ const CustomStepIconRoot = styled('div')<{ active?: boolean }>(({ theme, active 
 
 function CustomStepIcon(props: any) {
   const { active, completed, className, icon } = props;
-  
+
   return (
     <CustomStepIconRoot active={active} className={className}>
       {completed ? (
@@ -70,8 +70,8 @@ function CustomStepIcon(props: any) {
   );
 }
 
-const ResumeUploader = ({ 
-  onFileUpload, 
+const ResumeUploader = ({
+  onFileUpload,
   onEnhanceResume,
   isProcessing = false,
   isResumeUploaded = false
@@ -82,7 +82,7 @@ const ResumeUploader = ({
   const [jobDescription, setJobDescription] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  
+
   const steps = ['Upload Resume', 'Add Job Description', 'AI Processing'];
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
@@ -98,7 +98,7 @@ const ResumeUploader = ({
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setIsDragging(false);
-    
+
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
       const droppedFile = e.dataTransfer.files[0];
       handleFileSelection(droppedFile);
@@ -114,7 +114,7 @@ const ResumeUploader = ({
 
   const handleFileSelection = (selectedFile: File) => {
     const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
-    
+
     if (!allowedTypes.includes(selectedFile.type)) {
       toast("Invalid file format", {
         description: "Please upload a PDF or Word document",
@@ -122,7 +122,7 @@ const ResumeUploader = ({
       });
       return;
     }
-    
+
     if (selectedFile.size > 5 * 1024 * 1024) { // 5MB limit
       toast("File too large", {
         description: "File size exceeds 5MB limit",
@@ -130,11 +130,11 @@ const ResumeUploader = ({
       });
       return;
     }
-    
+
     // Generate preview URL
     const fileUrl = URL.createObjectURL(selectedFile);
     setPreviewUrl(fileUrl);
-    
+
     setFile(selectedFile);
     setActiveStep(1);
 
@@ -164,9 +164,9 @@ const ResumeUploader = ({
       });
       return;
     }
-    
+
     setActiveStep(2);
-    
+
     if (onEnhanceResume) {
       onEnhanceResume(jobDescription);
     }
@@ -194,8 +194,8 @@ const ResumeUploader = ({
             {steps.map((label, index) => (
               <Step key={label}>
                 <StepLabel StepIconComponent={CustomStepIcon}>
-                  <span style={{ 
-                    color: index === activeStep ? '#3366FF' : 'rgb(100, 116, 139)', 
+                  <span style={{
+                    color: index === activeStep ? '#3366FF' : 'rgb(100, 116, 139)',
                     fontWeight: index === activeStep ? 'bold' : 'normal',
                     fontSize: index === activeStep ? '0.95rem' : '0.875rem'
                   }}>
@@ -206,7 +206,7 @@ const ResumeUploader = ({
             ))}
           </Stepper>
         </Box>
-        
+
         <input
           type="file"
           ref={fileInputRef}
@@ -214,8 +214,8 @@ const ResumeUploader = ({
           className="hidden"
           accept=".pdf,.doc,.docx"
         />
-        
-        <Card 
+
+        <Card
           className={cn(
             "border-2 border-dashed p-10 text-center cursor-pointer transition-all duration-200 gradient-border bg-card/50 mx-12 my-0",
             isDragging ? "border-primary bg-primary/5" : "border-muted-foreground/20 hover:border-primary/50"
@@ -240,7 +240,7 @@ const ResumeUploader = ({
             </div>
           </div>
         </Card>
-        
+
         <div className="flex items-center justify-center mt-4">
           <Shield className="h-4 w-4 mr-2 text-muted-foreground/70" />
           <p className="text-xs text-muted-foreground text-center">
@@ -259,8 +259,8 @@ const ResumeUploader = ({
             {steps.map((label, index) => (
               <Step key={label}>
                 <StepLabel StepIconComponent={CustomStepIcon}>
-                  <span style={{ 
-                    color: index === activeStep ? '#3366FF' : 'rgb(100, 116, 139)', 
+                  <span style={{
+                    color: index === activeStep ? '#3366FF' : 'rgb(100, 116, 139)',
                     fontWeight: index === activeStep ? 'bold' : 'normal',
                     fontSize: index === activeStep ? '0.95rem' : '0.875rem'
                   }}>
@@ -271,7 +271,7 @@ const ResumeUploader = ({
             ))}
           </Stepper>
         </Box>
-        
+
         <Card className="p-6 border shadow-sm mx-12 my-0">
           <div className="flex items-start justify-between mb-8">
             <div className="flex items-center space-x-3">
@@ -288,29 +288,34 @@ const ResumeUploader = ({
               </div>
             </div>
           </div>
-          
+
           <div className="space-y-4 m-4">
             <div>
               <Label htmlFor="job-description" className="flex items-center gap-2 font-medium">
                 <Briefcase className="h-4 w-4" />
                 Job Description
               </Label>
-              <Textarea 
+              <Textarea
                 id="job-description"
                 value={jobDescription}
                 onChange={(e) => setJobDescription(e.target.value)}
                 placeholder="Paste the job description you're applying for here..."
                 className="h-[150px] mt-2 resize-none"
               />
-              <p className="text-xs text-muted-foreground mt-2">
-                Our AI will tailor your resume to match this job description
-              </p>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Our AI will tailor your resume to match this job description
+                </p>
+                <p className="text-xs text-muted-foreground mt-2">
+                  (minimum 30 characters)
+                </p>
+              </div>
             </div>
           </div>
-          
+
           <div className="flex justify-end mt-6">
-            <Button 
-              variant="default" 
+            <Button
+              variant="default"
               onClick={handleSubmit}
               className={cn(
                 jobDescription.replace(/\s/g, '').length > 30 ? "hover:animate-pulse-subtle" : "",
@@ -334,8 +339,8 @@ const ResumeUploader = ({
             {steps.map((label, index) => (
               <Step key={label}>
                 <StepLabel StepIconComponent={CustomStepIcon}>
-                  <span style={{ 
-                    color: index === activeStep ? '#3366FF' : 'rgb(100, 116, 139)', 
+                  <span style={{
+                    color: index === activeStep ? '#3366FF' : 'rgb(100, 116, 139)',
                     fontWeight: index === activeStep ? 'bold' : 'normal',
                     fontSize: index === activeStep ? '0.95rem' : '0.875rem'
                   }}>
@@ -346,35 +351,35 @@ const ResumeUploader = ({
             ))}
           </Stepper>
         </Box>
-        
+
         <div className="space-y-4">
           <div className="flex items-center justify-center mb-4">
             <Paper elevation={3} className="p-4 bg-primary/5 rounded-full">
               <FileText className="h-8 w-8 text-primary animate-pulse" />
             </Paper>
           </div>
-          
+
           <Typography variant="h6" className="text-center">
             Enhancing Your Resume
           </Typography>
-          
+
           <Typography variant="body2" className="text-center text-muted-foreground mb-4">
             Our AI is analyzing your document and making improvements...
           </Typography>
-          
-          <LinearProgress 
-            color="primary" 
-            sx={{ 
-              height: 8, 
+
+          <LinearProgress
+            color="primary"
+            sx={{
+              height: 8,
               borderRadius: 4,
               bgcolor: 'rgba(99, 102, 241, 0.1)',
               '& .MuiLinearProgress-bar': {
                 borderRadius: 4,
                 bgcolor: 'var(--primary)',
               }
-            }} 
+            }}
           />
-          
+
           <ul className="text-xs space-y-2 text-muted-foreground mt-4">
             <li className="flex items-center">
               <CheckCircle className="h-3 w-3 mr-2 text-primary" />
@@ -391,7 +396,7 @@ const ResumeUploader = ({
           </ul>
         </div>
       </Card>
-      
+
       <div className="flex items-center justify-center mt-4">
         <Shield className="h-4 w-4 mr-2 text-muted-foreground/70" />
         <p className="text-xs text-muted-foreground text-center">

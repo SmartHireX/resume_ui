@@ -91,7 +91,7 @@ const DesktopLayout: React.FC<{
 }> = ({ children, resumePreviewRef, resumeData, isLoading }) => {
   return (
     <section className="split-layout">
-      <div className="description-side bg-muted/30 h-[93%] p-8">
+      <div className="description-side bg-muted/30 p-8">
         <div className="h-full w-full flex items-center justify-center p-6">
           <div ref={resumePreviewRef} className="resume-preview w-full h-[70vh] rounded-lg shadow-sm overflow-hidden">
             {isLoading ? (
@@ -105,7 +105,7 @@ const DesktopLayout: React.FC<{
           </div>
         </div>
       </div>
-      <div className="upload-side h-[93%]">
+      <div className="upload-side">
         <div className="flex flex-col justify-center w-full max-w-[53rem] px-4 h-[42rem]">
           {children}
         </div>
