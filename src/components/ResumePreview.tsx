@@ -268,35 +268,6 @@ const DesktopResumePreview: React.FC<ResumePreviewProps> = ({ resumeData }) => {
         </div>
       )}
 
-      {/* Education */}
-      {education.length > 0 && (
-        <div className="mb-5">
-          <h2 className="text-base font-bold text-black border-b border-gray-200 mb-3 pb-1 flex items-center">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2 text-primary">
-              <path d="M22 10v6M2 10l10-5 10 5-10 5z"></path>
-              <path d="M6 12v5c3 3 9 3 12 0v-5"></path>
-            </svg>
-            Education
-          </h2>
-          
-          {education.map((edu, index) => (
-            <div key={index} className={`mb-3 ${index !== education.length - 1 ? "pb-2 border-b border-gray-100" : ""}`}>
-              <div className="flex flex-row justify-between items-start">
-                <h3 className="font-semibold text-sm text-black">{edu.qualification}</h3>
-                <span className="text-xs text-black bg-gray-100 px-1.5 py-0.5 rounded">
-                  {formatDuration(edu.duration)}
-                </span>
-              </div>
-              <p className="text-xs text-black mt-0.5">
-                {edu.institute}
-                {edu.field_of_study && <span className="ml-1">• {edu.field_of_study}</span>}
-                {edu.marks && <span className="ml-2 font-medium text-black text-xs">• {edu.marks}</span>}
-              </p>
-            </div>
-          ))}
-        </div>
-      )}
-
       {/* Projects */}
       {projects.length > 0 && (
         <div className="mb-5">
@@ -356,57 +327,6 @@ const DesktopResumePreview: React.FC<ResumePreviewProps> = ({ resumeData }) => {
         </div>
       )}
 
-      {/* Achievements */}
-      {resumeData.achievements && resumeData.achievements.length > 0 && (
-        <div className="mb-5">
-          <h2 className="text-base font-bold text-black border-b border-gray-200 mb-3 pb-1 flex items-center">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2 text-primary">
-              <path d="M8 6v12"></path>
-              <path d="M20 6v12"></path>
-              <path d="M8 12h12"></path>
-              <path d="M8 18h12"></path>
-              <path d="M8 6h12"></path>
-            </svg>
-            Achievements
-          </h2>
-          <ul className="list-disc pl-4 text-sm">
-            {resumeData.achievements.map((achievement, index) => (
-              <li key={index} className="text-xs text-black mb-1">
-                {achievement}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {/* Certifications */}
-      {certifications.length > 0 && (
-        <div className="mb-5">
-          <h2 className="text-base font-bold text-black border-b border-gray-200 mb-3 pb-1 flex items-center">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2 text-primary">
-              <path d="M21.27 10.9c-1.21-.33-2.42-.67-3.63-1.01-1.77-.5-3.53-1-5.3-1.5-1.77-.5-3.53-1-5.3-1.5-1.21-.33-2.42-.67-3.63-1.01-.51-.14-1.12.11-1.37.58-.31.58-.05 1.27.55 1.55 1.21.55 2.43 1.04 3.64 1.54 1.77.73 3.54 1.46 5.31 2.2 1.77.73 3.54 1.46 5.31 2.2 1.21.5 2.43.99 3.64 1.54.51.22 1.18-.05 1.42-.54.32-.64.03-1.48-.64-1.71"></path>
-              <path d="M11.5 14.25V20.5"></path>
-              <path d="M12.5 14.25V20.5"></path>
-              <path d="M11.25 21.25h1.5l.9-2 .9 2h1.5"></path>
-            </svg>
-            Certifications
-          </h2>
-          
-          <div className="grid grid-cols-1 gap-2">
-            {certifications.map((cert, index) => (
-              <div key={index} className="flex justify-between items-start">
-                <div>
-                  <p className="text-xs font-medium text-black">{cert.title}</p>
-                  <p className="text-xs text-black">{cert.institution}</p>
-                </div>
-                <span className="text-xs text-black bg-gray-100 px-1.5 py-0.5 rounded">
-                  {cert.date}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* Skills */}
       <div className="mb-5">
@@ -498,6 +418,88 @@ const DesktopResumePreview: React.FC<ResumePreviewProps> = ({ resumeData }) => {
           )}
         </div>
       </div>
+
+      {/* Education */}
+      {education.length > 0 && (
+        <div className="mb-5">
+          <h2 className="text-base font-bold text-black border-b border-gray-200 mb-3 pb-1 flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2 text-primary">
+              <path d="M22 10v6M2 10l10-5 10 5-10 5z"></path>
+              <path d="M6 12v5c3 3 9 3 12 0v-5"></path>
+            </svg>
+            Education
+          </h2>
+          
+          {education.map((edu, index) => (
+            <div key={index} className={`mb-3 ${index !== education.length - 1 ? "pb-2 border-b border-gray-100" : ""}`}>
+              <div className="flex flex-row justify-between items-start">
+                <h3 className="font-semibold text-sm text-black">{edu.qualification}</h3>
+                <span className="text-xs text-black bg-gray-100 px-1.5 py-0.5 rounded">
+                  {formatDuration(edu.duration)}
+                </span>
+              </div>
+              <p className="text-xs text-black mt-0.5">
+                {edu.institute}
+                {edu.field_of_study && <span className="ml-1">• {edu.field_of_study}</span>}
+                {edu.marks && <span className="ml-2 font-medium text-black text-xs">• {edu.marks}</span>}
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Achievements */}
+      {resumeData.achievements && resumeData.achievements.length > 0 && (
+        <div className="mb-5">
+          <h2 className="text-base font-bold text-black border-b border-gray-200 mb-3 pb-1 flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2 text-primary">
+              <path d="M8 6v12"></path>
+              <path d="M20 6v12"></path>
+              <path d="M8 12h12"></path>
+              <path d="M8 18h12"></path>
+              <path d="M8 6h12"></path>
+            </svg>
+            Achievements
+          </h2>
+          <ul className="list-disc pl-4 text-sm">
+            {resumeData.achievements.map((achievement, index) => (
+              <li key={index} className="text-xs text-black mb-1">
+                {achievement}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* Certifications */}
+      {certifications.length > 0 && (
+        <div className="mb-5">
+          <h2 className="text-base font-bold text-black border-b border-gray-200 mb-3 pb-1 flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2 text-primary">
+              <path d="M21.27 10.9c-1.21-.33-2.42-.67-3.63-1.01-1.77-.5-3.53-1-5.3-1.5-1.77-.5-3.53-1-5.3-1.5-1.21-.33-2.42-.67-3.63-1.01-.51-.14-1.12.11-1.37.58-.31.58-.05 1.27.55 1.55 1.21.55 2.43 1.04 3.64 1.54 1.77.73 3.54 1.46 5.31 2.2 1.77.73 3.54 1.46 5.31 2.2 1.21.5 2.43.99 3.64 1.54.51.22 1.18-.05 1.42-.54.32-.64.03-1.48-.64-1.71"></path>
+              <path d="M11.5 14.25V20.5"></path>
+              <path d="M12.5 14.25V20.5"></path>
+              <path d="M11.25 21.25h1.5l.9-2 .9 2h1.5"></path>
+            </svg>
+            Certifications
+          </h2>
+          
+          <div className="grid grid-cols-1 gap-2">
+            {certifications.map((cert, index) => (
+              <div key={index} className="flex justify-between items-start">
+                <div>
+                  <p className="text-xs font-medium text-black">{cert.title}</p>
+                  <p className="text-xs text-black">{cert.institution}</p>
+                </div>
+                <span className="text-xs text-black bg-gray-100 px-1.5 py-0.5 rounded">
+                  {cert.date}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       
       {/* Languages */}
       {languages_known.length > 0 && (
