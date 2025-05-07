@@ -74,6 +74,21 @@ interface ResumeData {
   [key: string]: any;
 }
 
+// Update ATSScore interface to include section breakdown
+interface ATSScores {
+  old: number;
+  new: number;
+  summary?: number;
+  experience?: number;
+  projects?: number;
+  skills?: number;
+  achievements?: number;
+  education?: number;
+  certifications?: number;
+  // Add other potential sections here if needed
+  [key: string]: any; // Allow indexing with string keys for flexibility
+}
+
 const convertApiSuggestionsToAppFormat = (suggestions: EnhancementSuggestion[]): Suggestion[] => {
   return suggestions.map(suggestion => ({
     section: suggestion.section,
@@ -155,6 +170,9 @@ const EnhancePage = () => {
   const [allSuggestionsDone, setAllSuggestionsDone] = useState(false);
   const resumePreviewRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
+
+  // Keep track of the detailed ATS score breakdown received from the API
+  const [detailedAtsScore, setDetailedAtsScore] = useState<ATSScores | undefined>(undefined);
 
   const handleFileUpload = async (file: File) => {
     setUploadedFile(file);
@@ -244,6 +262,7 @@ const EnhancePage = () => {
       const enhancementResponse = await getEnhancementSuggestions(apiResumeData, jobDesc);
       setSuggestions(convertApiSuggestionsToAppFormat(enhancementResponse.suggestions));
       setAtsScore(enhancementResponse.atsScore);
+      setDetailedAtsScore(enhancementResponse.atsScore);
       setShowEnhancements(true);
       setAllSuggestionsDone(false);
     } catch (error) {
@@ -494,6 +513,28 @@ const EnhancePage = () => {
   };
 
   const handleRejectSuggestion = (index: number) => {
+    // Get the suggestion being rejected
+    const suggestion = suggestions[index];
+    const section = suggestion.section.toLowerCase();
+
+    // Find the points associated with this section from the detailed ATS score
+    // Use the detailedAtsScore state which holds the breakdown
+    const pointsToSubtract = detailedAtsScore?.[section] || 0;
+
+    // Update the overall ATS score, subtracting points only from the 'new' score
+    // Ensure the new score doesn't drop below the original score
+    setAtsScore(prevScore => {
+      if (!prevScore) return undefined; // Should not happen if suggestions exist, but good practice
+      const potentialNewScore = prevScore.new - pointsToSubtract;
+      // Prevent the new score from dropping below the original score
+      const clampedNewScore = Math.max(potentialNewScore, prevScore.old);
+      return {
+        ...prevScore,
+        new: clampedNewScore
+      };
+    });
+
+    // Remove the suggestion from the list
     const updatedSuggestions = [...suggestions];
     updatedSuggestions.splice(index, 1);
     setSuggestions(updatedSuggestions);
@@ -519,6 +560,15 @@ const EnhancePage = () => {
     // Clear all suggestions at once
     setSuggestions([]);
     setAllSuggestionsDone(true);
+
+    // When rejecting all, reset the ATS score to the original score
+    setAtsScore(prevScore => {
+      if (!prevScore) return undefined;
+      return {
+        ...prevScore,
+        new: prevScore.old // Reset new score back to original
+      };
+    });
 
     toast(`${totalSuggestions} suggestions rejected`, {
       description: "Your resume remains unchanged",
