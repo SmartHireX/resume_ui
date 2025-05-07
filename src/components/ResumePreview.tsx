@@ -193,18 +193,20 @@ const DesktopResumePreview: React.FC<ResumePreviewProps> = ({ resumeData }) => {
       </div>
 
       {/* Professional Summary */}
-      <div className="mb-5">
-        <h2 className="text-base font-bold text-black border-b border-gray-200 mb-2 pb-1 flex items-center">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2 text-primary">
-            <path d="M18 6H5a2 2 0 0 0-2 2v3"></path>
-            <path d="M18 6v12c0 1-1 2-2 2s-2-1-2-2 1-2 2-2c1.7 0 3 1.3 3 3"></path>
-            <path d="m7 16 3-2 5 4"></path>
-            <path d="M7 19h9"></path>
-          </svg>
-          Professional Summary
-        </h2>
-        <p className="text-sm text-black leading-relaxed whitespace-pre-line">{summary}</p>
-      </div>
+      {summary && summary.trim() !== '' && (
+        <div className="mb-5">
+          <h2 className="text-base font-bold text-black border-b border-gray-200 mb-2 pb-1 flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2 text-primary">
+              <path d="M18 6H5a2 2 0 0 0-2 2v3"></path>
+              <path d="M18 6v12c0 1-1 2-2 2s-2-1-2-2 1-2 2-2c1.7 0 3 1.3 3 3"></path>
+              <path d="m7 16 3-2 5 4"></path>
+              <path d="M7 19h9"></path>
+            </svg>
+            Professional Summary
+          </h2>
+          <p className="text-sm text-black leading-relaxed whitespace-pre-line">{summary}</p>
+        </div>
+      )}
 
       {/* Experience */}
       {experience.length > 0 && (
