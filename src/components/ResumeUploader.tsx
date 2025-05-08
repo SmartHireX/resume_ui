@@ -321,7 +321,7 @@ const ResumeUploader = ({
                 jobDescription.replace(/\s/g, '').length > 30 ? "hover:animate-pulse-subtle" : "",
                 "transition-all duration-200"
               )}
-              disabled={jobDescription.replace(/\s/g, '').length <= 30}
+              disabled={!isResumeUploaded || jobDescription.trim().length <= 30}
             >
               Enhance Resume
             </Button>

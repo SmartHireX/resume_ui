@@ -95,7 +95,9 @@ export const parseResume = async (file: File): Promise<FlexibleResumeData> => {
     });
     
     if (!response.ok) {
-      throw new Error(`API error: ${response.status}`);
+      const errorData = await response.json();
+      const errorMessage = errorData.error || `API error: ${response.status} - ${response.statusText}`;
+      throw new Error(errorMessage);
     }
     
     const data = await response.json();

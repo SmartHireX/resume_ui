@@ -38,12 +38,14 @@ interface Project {
   description: string | null;
   deliverables: string[];
   technologies: string[];
+  link?: string;
 }
 
 interface Certification {
   title: string;
   institution: string;
   date: string;
+  link?: string;
 }
 
 interface Skills {
@@ -290,7 +292,13 @@ const DesktopResumePreview: React.FC<ResumePreviewProps> = ({ resumeData }) => {
                   </span>
                 )}
               </div>
-              
+              {project.link && (
+                <div className="flex items-center mt-1.5">
+                  <Globe className="h-3 w-3 mr-1.5 text-primary" />
+                  <a href={project.link.startsWith('http') ? project.link : `https://${project.link}`} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:underline">Project Link</a>
+                </div>
+              )}
+
               {project.summary && (
                 <p className="text-xs leading-tight mt-1 text-black">{project.summary}</p>
               )}
@@ -486,20 +494,27 @@ const DesktopResumePreview: React.FC<ResumePreviewProps> = ({ resumeData }) => {
           
           <div className="grid grid-cols-1 gap-2">
             {certifications.map((cert, index) => (
-              <div key={index} className="flex justify-between items-start">
-                <div>
-                  <p className="text-xs font-medium text-black">{cert.title}</p>
-                  <p className="text-xs text-black">{cert.institution}</p>
+              <div key={index} className="border-b border-gray-100 pb-2 last:border-b-0 last:pb-0">
+                <div className="flex justify-between items-start mb-1">
+                  <div>
+                    <p className="text-xs font-medium text-black">{cert.title}</p>
+                    <p className="text-xs text-black">{cert.institution}</p>
+                  </div>
+                  <span className="text-xs text-black bg-gray-100 px-1.5 py-0.5 rounded">
+                    {cert.date}
+                  </span>
                 </div>
-                <span className="text-xs text-black bg-gray-100 px-1.5 py-0.5 rounded">
-                  {cert.date}
-                </span>
+                {cert.link && (
+                  <div className="flex items-center mt-1.5">
+                    <Globe className="h-3 w-3 mr-1.5 text-primary" />
+                    <a href={cert.link.startsWith('http') ? cert.link : `https://${cert.link}`} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:underline">Certificate Link</a>
+                  </div>
+                )}
               </div>
             ))}
           </div>
         </div>
       )}
-
       
       {/* Languages */}
       {languages_known.length > 0 && (
@@ -658,13 +673,20 @@ const MobileResumePreview: React.FC<ResumePreviewProps> = ({ resumeData }) => {
           {projects.slice(0, 2).map((project, index) => (
             <div key={index} className={`mb-2 ${index !== Math.min(projects.length, 2) - 1 ? "pb-2 border-b border-gray-100" : ""}`}>
               <div className="flex justify-between items-center">
-                <h3 className="font-semibold text-xs text-black">{project.name}</h3>
+                <h3 className="font-semibold text-xs text-black mr-2">{project.name}</h3>
                 {project.duration && (
                   <span className="text-[9px] text-black bg-gray-100 px-1 py-0.5 rounded">
                     {formatDuration(project.duration)}
                   </span>
                 )}
               </div>
+              {project.link && (
+                <div className="flex items-center mt-1">
+                  <Globe className="h-2.5 w-2.5 mr-1 text-primary" />
+                  <a href={project.link.startsWith('http') ? project.link : `https://${project.link}`} target="_blank" rel="noopener noreferrer" className="text-[9px] text-blue-600 hover:underline">Link</a>
+                </div>
+              )}
+
               {project.summary && (
                 <p className="text-[10px] mt-0.5 text-black">{project.summary}</p>
               )}
@@ -796,12 +818,20 @@ const MobileResumePreview: React.FC<ResumePreviewProps> = ({ resumeData }) => {
       </h2>
       <div className="grid grid-cols-1 gap-1.5">
       {certifications.slice(0, 2).map((cert, index) => (
-      <div key={index} className="flex justify-between items-start border-b border-gray-100 pb-1 last:border-b-0 last:pb-0">
-      <div>
-      <p className="text-[10px] font-medium text-black leading-tight">{cert.title}</p>
-      <p className="text-[9px] text-black leading-tight">{cert.institution}</p>
-      </div>
-      <span className="text-[9px] text-black bg-gray-100 px-1 py-0.5 rounded whitespace-nowrap">{cert.date}</span>
+      <div key={index} className="border-b border-gray-100 pb-1 last:border-b-0 last:pb-0">
+        <div className="flex justify-between items-start mb-1">
+          <div>
+            <p className="text-[10px] font-medium text-black leading-tight">{cert.title}</p>
+            <p className="text-[9px] text-black leading-tight">{cert.institution}</p>
+          </div>
+          <span className="text-[9px] text-black bg-gray-100 px-1 py-0.5 rounded whitespace-nowrap">{cert.date}</span>
+        </div>
+        {cert.link && (
+          <div className="flex items-center mt-1">
+            <Globe className="h-2.5 w-2.5 mr-1 text-primary" />
+            <a href={cert.link.startsWith('http') ? cert.link : `https://${cert.link}`} target="_blank" rel="noopener noreferrer" className="text-[9px] text-blue-600 hover:underline">Certificate Link</a>
+          </div>
+        )}
       </div>
       ))}
       </div>
@@ -843,26 +873,21 @@ const MobileResumePreview: React.FC<ResumePreviewProps> = ({ resumeData }) => {
         <div className="mb-3">
           <h2 className="text-sm font-bold text-black border-b border-gray-200 mb-2 pb-1 flex items-center">
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1.5 text-primary">
-              <path d="M10.5 14c-1.83 0-3.5-1.67-3.5-3.75 0-1.84 1.17-3.25 2.5-3.75 1.18-.5 2.5-1 3.5-1.5 1.33-.67 2.5-1.5 3.5-2.5 1.17-1.17 2.5-2.5 3.5-3.75 1.33-1.33 2.5-2.5 3.5-3.75 1.17-1.17 1.83-1.83 3.5-1.83 1.67 0 3.25 1.17 3.75 2.5.5 1.18 1 2.5 1.5 3.5.67 1.33 1.5 2.5 2.5 3.5 1.17 1.17 2.5 2.5 3.75 3.5 1.33 1.33 2.5 2.5 3.75 3.5 1.17 1.17 1.83 1.83 3.75 3.75 1.67 1.67 3.25 3.25 3.75 3.75 0 1.83-1.67 3.5-3.75 3.5-1.18 0-2.5-.5-3.5-1.5-1.33-.67-2.5-1.5-3.5-2.5-1.17-1.17-2.5-2.5-3.5-3.75-1.33-1.33-2.5-2.5-3.5-3.75"></path>
-              <path d="M14.5 19c-1.33 0-2.5.67-3.5 1.83-1.17 1.17-2.5 2.5-3.5 3.75-1.17 1.33-2.5 2.5-3.75 3.5-1.33 1.17-2.5 2.5-3.75 3.75-1.17 1.17-2.5 2.5-3.75 3.5 0 1.67 1.17 3.25 2.5 3.75 1.33.5 2.5 1 3.5 1.5 1.17.67 2.5 1.5 3.5 2.5 1.33 1.17 2.5 2.5 3.75 3.5 1.17 1.17 2.5 2.5 3.5 3.75 1.33 1.33 2.5 2.5 3.75 3.5 1.17 1.17 1.83 1.83 3.5 1.83 1.67 0 3.25-1.17 3.75-2.5.5-1.18 1-2.5 1.5-3.5.67-1.33 1.5-2.5 2.5-3.5 1.17-1.17 2.5-2.5 3.75-3.5 1.33-1.33 2.5-2.5 3.75-3.5 1.17-1.17 1.83-1.83 3.75-3.75 1.67-1.67 3.25-3.25 3.75-3.75 0-1.83 1.67-3.5 3.75-3.5 1.18 0 2.5.5 3.5 1.5 1.33.67 2.5 1.5 3.5 2.5 1.17 1.17 2.5 2.5 3.5 3.75 1.33 1.33 2.5 2.5 3.75 3.75"></path>
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" x2="12" y1="8" y2="12"></line>
+              <line x1="12" x2="12.01" y1="16" y2="16"></line>
             </svg>
             Interests
           </h2>
-          <div className="mt-1.5 space-y-1.5">
-            <ul className="list-disc list-inside text-[10px] font-medium text-black">
-              {interests.map((interest, index) => (
-                <li key={index} className="mb-1">
-                  {interest}
-                </li>
-              ))}
-            </ul>
+          <div className="flex flex-wrap gap-2">
+            {interests.map((interest, index) => (
+              <Badge key={index} variant="outline" className="bg-gray-100 text-xs text-black">
+                {interest}
+              </Badge>
+            ))}
           </div>
         </div>
       )}
-      
-     
-      
-
     </div>
   );
 };

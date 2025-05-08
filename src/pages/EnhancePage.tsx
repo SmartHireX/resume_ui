@@ -2,7 +2,7 @@ import React, { useState, useRef } from "react";
 import Header from "@/components/Header";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, Download, Loader2, XCircle } from "lucide-react";
+import { CheckCircle, Download, Loader2, XCircle, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import ResumeUploader from "@/components/ResumeUploader";
 import ResumeSuggestions, { Suggestion } from "@/components/ResumeSuggestions";
@@ -13,6 +13,10 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import Footer from "@/components/Footer";
 import { useReactToPrint } from 'react-to-print';
 import '../components/PrintStyles.css';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
+import { useNavigate } from 'react-router-dom';
+import { cn } from "@/lib/utils";
+import { Card } from "@/components/ui/card";
 
 
 // Match the ResumeData interface from ResumePreview component
@@ -170,6 +174,9 @@ const EnhancePage = () => {
   const [allSuggestionsDone, setAllSuggestionsDone] = useState(false);
   const resumePreviewRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [showErrorDialog, setShowErrorDialog] = useState(false);
+  const navigate = useNavigate();
 
   // Keep track of the detailed ATS score breakdown received from the API
   const [detailedAtsScore, setDetailedAtsScore] = useState<ATSScores | undefined>(undefined);
@@ -220,15 +227,22 @@ const EnhancePage = () => {
       setResumeData(formattedResumeData);
       toast("Resume uploaded successfully", {
         description: "Now add the job description you're targeting",
+        duration: 2000,
       });
     } catch (error) {
       console.error("Error parsing resume:", error);
-      toast("Error parsing resume", {
-        description: "Please try uploading again",
-      });
+      const message = (error as Error).message || "An unexpected error occurred while processing your resume.";
+      setErrorMessage(message);
+      setShowErrorDialog(true);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleCloseErrorDialog = () => {
+    setShowErrorDialog(false);
+    setErrorMessage(null);
+    navigate('/');
   };
 
   const handleEnhanceResume = async (jobDesc: string) => {
@@ -504,10 +518,12 @@ const EnhancePage = () => {
       setAllSuggestionsDone(true);
       toast("All suggestions applied!", {
         description: "Your resume is now ready to download",
+        duration: 2000,
       });
     } else {
       toast("Suggestion applied", {
         description: `Updated ${suggestion.section}`,
+        duration: 2000,
       });
     }
   };
@@ -543,10 +559,12 @@ const EnhancePage = () => {
       setAllSuggestionsDone(true);
       toast("All suggestions processed!", {
         description: "Your resume is now ready to download",
+        duration: 2000,
       });
     } else {
       toast("Suggestion ignored", {
         description: "You can continue with remaining suggestions",
+        duration: 2000,
       });
     }
   };
@@ -572,6 +590,7 @@ const EnhancePage = () => {
 
     toast(`${totalSuggestions} suggestions rejected`, {
       description: "Your resume remains unchanged",
+      duration: 2000,
     });
   };
 
@@ -715,7 +734,10 @@ const EnhancePage = () => {
     content: () => resumePreviewRef.current,
     documentTitle: "Enhanced Resume",
     onBeforeGetContent: () => { toast("Preparing for print..."); },
-    onAfterPrint: () => { toast("Resume printed successfully"); },
+    onAfterPrint: () => { 
+      toast("Resume printed successfully"); 
+      navigate("/");
+    },
     onPrintError: (error) => { toast("Error printing resume", { description: "Please try again." }); }
   });
 
@@ -860,6 +882,21 @@ const EnhancePage = () => {
         )}
       </main>
       <Footer />
+
+      {/* Error Dialog */}
+      <Dialog open={showErrorDialog} onOpenChange={setShowErrorDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="text-destructive flex items-center"><AlertCircle className="h-5 w-5 mr-2" /> Error</DialogTitle>
+          </DialogHeader>
+          <DialogDescription>
+            {errorMessage}
+          </DialogDescription>
+          <DialogFooter>
+            <Button onClick={handleCloseErrorDialog}>OK</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
