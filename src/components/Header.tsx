@@ -31,7 +31,7 @@ const Header = () => {
             <div className="bg-gradient-to-r from-primary/80 to-primary p-1.5 sm:p-2 rounded-lg shadow-md">
               <FileSpreadsheet className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
             </div>
-            <span className="text-lg sm:text-xl font-bold bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">Resume Align</span>
+            <span className="text-lg sm:text-xl font-bold multicolor-text">Resume Align</span>
           </Link>
           
           {/* Mobile buttons */}

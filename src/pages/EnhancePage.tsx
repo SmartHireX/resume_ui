@@ -732,13 +732,36 @@ const EnhancePage = () => {
 
   const handlePrint = useReactToPrint({
     content: () => resumePreviewRef.current,
-    documentTitle: "Enhanced Resume",
-    onBeforeGetContent: () => { toast("Preparing for print..."); },
+    documentTitle: resumeData?.personalInfo?.name 
+      ? `${resumeData.personalInfo.name.split(' ')[0]}'s Enhanced Resume` 
+      : "Enhanced Resume",
+    onBeforeGetContent: () => { toast("Preparing for download..."); },
     onAfterPrint: () => { 
-      toast("Resume printed successfully"); 
-      navigate("/");
+      // Show success toast but don't navigate away
+      toast("Resume download initiated", {
+        description: "Please check your downloads folder or browser download dialog"
+      });
+      
+      // Show a follow-up toast after a short delay to check if download was successful
+      setTimeout(() => {
+        toast("Did you get your resume?", {
+          description: "If download failed, try again or check browser settings",
+          action: {
+            label: "Try Again",
+            onClick: () => handlePrint()
+          }
+        });
+      }, 3000);
     },
-    onPrintError: (error) => { toast("Error printing resume", { description: "Please try again." }); }
+    onPrintError: (error) => { 
+      toast("Resume download failed", { 
+        description: "Please try again or check your browser settings.",
+        action: {
+          label: "Try Again",
+          onClick: () => handlePrint()
+        }
+      }); 
+    }
   });
 
   const renderContent = () => {
