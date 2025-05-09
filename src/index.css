@@ -1,48 +1,47 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    --background: 215 25% 27%;
-    --foreground: 210 40% 98%;
+    --background: 45 100% 95%; /* Soft cream */
+    --foreground: 0 0% 15%; /* Deep charcoal */
 
-    --card: 220 20% 32%;
-    --card-foreground: 210 40% 98%;
+    --card: 0 0% 100%; /* Keep cards white for contrast */
+    --card-foreground: 225 25% 20%;
 
-    --popover: 220 20% 32%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 225 25% 20%;
 
-    --primary: 221.2 83.2% 53.3%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 16 100% 66%; /* Warm coral */
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 213.1 93.9% 87.8%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 180 60% 70%; /* Light teal */
+    --secondary-foreground: 180 30% 20%;
 
-    --muted: 215 25% 35%;
-    --muted-foreground: 215 20% 75%;
+    --muted: 210 15% 90%;
+    --muted-foreground: 225 20% 40%;
 
-    --accent: 213.1 93.9% 87.8%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 30 100% 60%; /* Bright orange */
+    --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 350 70% 40%; /* Deep maroon */
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 214.3 31.8% 45.4%;
-    --input: 214.3 31.8% 45.4%;
-    --ring: 221.2 83.2% 53.3%;
+    --border: 0 0% 85%; /* Light gray */
+    --input: 210 30% 80%;
+    --ring: 230 85% 60%;
 
-    --radius: 0.5rem;
+    --radius: 0.75rem; /* Slightly increased radius for more distinct card separation */
 
-    --sidebar-background: 220 20% 20%;
-    --sidebar-foreground: 240 5.3% 85%;
-    --sidebar-primary: 240 5.9% 90%;
-    --sidebar-primary-foreground: 220 20% 20%;
-    --sidebar-accent: 240 4.8% 30%;
-    --sidebar-accent-foreground: 240 5.9% 90%;
-    --sidebar-border: 220 13% 30%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-background: 225 35% 92%; /* Darker sidebar for better separation */
+    --sidebar-foreground: 225 25% 20%;
+    --sidebar-primary: 230 85% 60%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 330 85% 65%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 225 25% 85%;
+    --sidebar-ring: 230 85% 60%;
   }
 
   .dark {
