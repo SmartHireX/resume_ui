@@ -1,48 +1,47 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    --background: 215 25% 27%;
-    --foreground: 210 40% 98%;
+    --background: 220 20% 97%; /* Light grey background */
+    --foreground: 220 25% 20%; /* Dark blue-grey text */
 
-    --card: 220 20% 32%;
-    --card-foreground: 210 40% 98%;
+    --card: 0 0% 100%; /* White cards */
+    --card-foreground: 220 25% 20%;
 
-    --popover: 220 20% 32%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 25% 20%;
 
-    --primary: 221.2 83.2% 53.3%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 210 100% 50%; /* Bright blue for buttons */
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 213.1 93.9% 87.8%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 210 40% 90%; /* Light blue for secondary elements */
+    --secondary-foreground: 210 50% 20%;
 
-    --muted: 215 25% 35%;
-    --muted-foreground: 215 20% 75%;
+    --muted: 220 15% 90%;
+    --muted-foreground: 220 20% 40%;
 
-    --accent: 213.1 93.9% 87.8%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 210 100% 60%; /* Slightly lighter blue for accents */
+    --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 70% 40%; /* Deep red for destructive actions */
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 214.3 31.8% 45.4%;
-    --input: 214.3 31.8% 45.4%;
-    --ring: 221.2 83.2% 53.3%;
+    --border: 220 15% 85%; /* Light blue-grey border */
+    --input: 220 20% 80%;
+    --ring: 210 100% 50%;
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
 
-    --sidebar-background: 220 20% 20%;
-    --sidebar-foreground: 240 5.3% 85%;
-    --sidebar-primary: 240 5.9% 90%;
-    --sidebar-primary-foreground: 220 20% 20%;
-    --sidebar-accent: 240 4.8% 30%;
-    --sidebar-accent-foreground: 240 5.9% 90%;
-    --sidebar-border: 220 13% 30%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-background: 220 25% 92%; /* Slightly darker sidebar */
+    --sidebar-foreground: 220 25% 20%;
+    --sidebar-primary: 210 100% 50%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 210 100% 60%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 220 20% 85%;
+    --sidebar-ring: 210 100% 50%;
   }
 
   .dark {
@@ -156,6 +155,35 @@
   .safe-area-padding-bottom {
     padding-bottom: env(safe-area-inset-bottom, 0.5rem);
   }
+
+  .multicolor-text {
+    background: linear-gradient(
+      90deg,
+      #2563eb 0%,   /* blue */
+      #06b6d4 20%,  /* cyan */
+      #22c55e 40%,  /* green */
+      #eab308 60%,  /* yellow */
+      #f59e42 80%,  /* orange */
+      #2563eb 100%  /* blue again for loop */
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: gradient-shift 6s ease-in-out infinite;
+    background-size: 200% auto;
+  }
+
+  @keyframes gradient-shift {
+    0% {
+      background-position: 0% center;
+    }
+    50% {
+      background-position: 100% center;
+    }
+    100% {
+      background-position: 0% center;
+    }
+  }
 }
 
 /* Layout and responsive styles */
@@ -167,12 +195,18 @@
 }
 
 .description-side {
+  background: linear-gradient(135deg, #e0ecff 0%, #f5faff 100%); /* Soft blue gradient */
   padding: 1.5rem 1rem;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   position: relative;
+}
+
+/* Dark theme style for description-side */
+.dark .description-side {
+  background: linear-gradient(135deg, hsl(240 5.9% 10%) 0%, hsl(222.2 84% 4.9%) 100%); /* Dark gradient using theme colors */
 }
 
 .description-side::after {
@@ -191,6 +225,13 @@
   display: flex;
   justify-content: center;
   align-items: center;
+}
+
+.resume-preview {
+  box-shadow: none;
+}
+:root:not(.dark) .resume-preview {
+  box-shadow: 0 6px 32px 0 rgba(37, 99, 235, 0.08), 0 1.5px 6px 0 rgba(37, 99, 235, 0.04);
 }
 
 /* Animation */
