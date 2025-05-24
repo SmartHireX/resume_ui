@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import ResumeUploader from "@/components/ResumeUploader";
 import ResumeSuggestions, { Suggestion } from "@/components/ResumeSuggestions";
 import ResumePreview from "@/components/ResumePreview";
-import { parseResume, getEnhancementSuggestions, EnhancementSuggestion, ATSScore, FlexibleResumeData } from "@/services/resumeService";
+import { parseResume, getEnhancementSuggestions } from "@/services/resumeService";
 import html2pdf from "html2pdf.js";
 import { useIsMobile } from "@/hooks/use-mobile";
 import Footer from "@/components/Footer";
@@ -17,6 +17,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { useNavigate } from 'react-router-dom';
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
+import { IATSScore, IEnhancementSuggestion, IFlexibleResumeData } from "@/interfaces/interfaces";
+import { convertToResumeData } from "@/lib/resumeHelpers";
+import { JOB_DESCRIPTION_INFO, PARSE_ERROR, UPLOAD_SUCCESS } from "@/lib/alerts";
 
 
 // Match the ResumeData interface from ResumePreview component
@@ -93,7 +96,7 @@ interface ATSScores {
   [key: string]: any; // Allow indexing with string keys for flexibility
 }
 
-const convertApiSuggestionsToAppFormat = (suggestions: EnhancementSuggestion[]): Suggestion[] => {
+const convertApiSuggestionsToAppFormat = (suggestions: IEnhancementSuggestion[]): Suggestion[] => {
   return suggestions.map(suggestion => ({
     section: suggestion.section,
     original: suggestion.original,
@@ -168,7 +171,7 @@ const EnhancePage = () => {
   const [showEnhancements, setShowEnhancements] = useState(false);
   const [jobDescription, setJobDescription] = useState("");
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
-  const [atsScore, setAtsScore] = useState<ATSScore | undefined>(undefined);
+  const [atsScore, setAtsScore] = useState<IATSScore | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(false);
   const [isGeneratingSuggestions, setIsGeneratingSuggestions] = useState(false);
   const [allSuggestionsDone, setAllSuggestionsDone] = useState(false);
@@ -186,53 +189,24 @@ const EnhancePage = () => {
     setIsLoading(true);
 
     try {
-      const parsedResumeData = await parseResume(file);
+      const parsedResumeData: any = await parseResume(file);
 
-      // Ensure parsedResumeData has the structure expected by ResumePreview
-      const formattedResumeData: ResumeData = {
-        personalInfo: parsedResumeData.personalInfo,
-        summary: parsedResumeData.summary || "",
-        experience: Array.isArray(parsedResumeData.experience) ? parsedResumeData.experience.map(exp => ({
-          ...exp,
-          location: exp.location || "",
-          achievements: Array.isArray(exp.achievements) ? exp.achievements : [],
-          technologies: Array.isArray(exp.technologies) ? exp.technologies : []
-        })) : [],
-        education: Array.isArray(parsedResumeData.education) ? parsedResumeData.education : [],
-        projects: Array.isArray(parsedResumeData.projects) ? parsedResumeData.projects.map(project => ({
-          ...project,
-          summary: project.summary || "",
-          description: project.description || null,
-          deliverables: Array.isArray(project.deliverables) ? project.deliverables : [],
-          technologies: Array.isArray(project.technologies) ? project.technologies : []
-        })) : [],
-        certifications: Array.isArray(parsedResumeData.certifications) ? parsedResumeData.certifications : [],
-        achievements: Array.isArray(parsedResumeData.achievements) ? parsedResumeData.achievements : [],
-        skills: parsedResumeData.skills || {
-          programming_languages: [],
-          databases: [],
-          technologies: [],
-          frameworks: [],
-          tools: [],
-          soft_skills: [],
-          other: []
-        },
-        languages_known: Array.isArray(parsedResumeData.languages_known) ? parsedResumeData.languages_known : [],
-        publications: Array.isArray(parsedResumeData.publications) ? parsedResumeData.publications : [],
-        awards: Array.isArray(parsedResumeData.awards) ? parsedResumeData.awards : [],
-        volunteer_experience: Array.isArray(parsedResumeData.volunteer_experience) ? parsedResumeData.volunteer_experience : [],
-        interests: Array.isArray(parsedResumeData.interests) ? parsedResumeData.interests : [],
-      };
-
-      setResumeData(formattedResumeData);
-      toast("Resume uploaded successfully", {
-        description: "Now add the job description you're targeting",
-        duration: 2000,
-      });
+      if (parsedResumeData.status === "success") {
+        // Ensure parsedResumeData has the structure expected by ResumePreview
+        const formattedResumeData: ResumeData = convertToResumeData(parsedResumeData.resume_data);
+        setResumeData(formattedResumeData);
+        toast(UPLOAD_SUCCESS, {
+          description: JOB_DESCRIPTION_INFO,
+          duration: 2000,
+        });
+      }
+      else {
+        setErrorMessage(PARSE_ERROR);
+        setShowErrorDialog(true);
+      }
     } catch (error) {
-      console.error("Error parsing resume:", error);
-      const message = (error as Error).message || "An unexpected error occurred while processing your resume.";
-      setErrorMessage(message);
+      console.error(PARSE_ERROR, error);
+      setErrorMessage(PARSE_ERROR);
       setShowErrorDialog(true);
     } finally {
       setIsLoading(false);
@@ -271,7 +245,7 @@ const EnhancePage = () => {
         certifications: resumeData.certifications,
         achievements: resumeData.achievements,
         languages_known: resumeData.languages_known
-      } as unknown as FlexibleResumeData;
+      } as unknown as IFlexibleResumeData;
 
       const enhancementResponse = await getEnhancementSuggestions(apiResumeData, jobDesc);
       setSuggestions(convertApiSuggestionsToAppFormat(enhancementResponse.suggestions));
@@ -574,7 +548,7 @@ const EnhancePage = () => {
 
     // Store the current suggestions length
     const totalSuggestions = suggestions.length;
-    
+
     // Clear all suggestions at once
     setSuggestions([]);
     setAllSuggestionsDone(true);
@@ -604,7 +578,7 @@ const EnhancePage = () => {
     // Process all suggestions and update resume data
     allSuggestions.forEach((suggestion) => {
       const section = suggestion.section.toLowerCase();
-      
+
       switch (section) {
         case "summary":
           if (suggestion.improved) {
@@ -628,7 +602,7 @@ const EnhancePage = () => {
               const expIndex = updatedResumeData.experience.findIndex(exp =>
                 exp.title === improvedExp.title && exp.company === improvedExp.company
               );
-              
+
               if (expIndex !== -1) {
                 updatedResumeData.experience[expIndex] = {
                   ...updatedResumeData.experience[expIndex],
@@ -672,7 +646,7 @@ const EnhancePage = () => {
               const projIndex = updatedResumeData.projects.findIndex(proj =>
                 proj.name === improvedProj.name
               );
-              
+
               if (projIndex !== -1) {
                 updatedResumeData.projects[projIndex] = {
                   ...updatedResumeData.projects[projIndex],
@@ -700,7 +674,7 @@ const EnhancePage = () => {
                 edu.qualification === improvedEdu.qualification &&
                 edu.institute === improvedEdu.institute
               );
-              
+
               if (eduIndex !== -1) {
                 updatedResumeData.education[eduIndex] = {
                   ...updatedResumeData.education[eduIndex],
@@ -720,7 +694,7 @@ const EnhancePage = () => {
 
     // Update resume data with all changes at once
     setResumeData(updatedResumeData);
-    
+
     // Clear all suggestions and mark as done
     setSuggestions([]);
     setAllSuggestionsDone(true);
@@ -732,16 +706,16 @@ const EnhancePage = () => {
 
   const handlePrint = useReactToPrint({
     content: () => resumePreviewRef.current,
-    documentTitle: resumeData?.personalInfo?.name 
-      ? `${resumeData.personalInfo.name.split(' ')[0]}'s Enhanced Resume` 
+    documentTitle: resumeData?.personalInfo?.name
+      ? `${resumeData.personalInfo.name.split(' ')[0]}'s Enhanced Resume`
       : "Enhanced Resume",
     onBeforeGetContent: () => { toast("Preparing for download..."); },
-    onAfterPrint: () => { 
+    onAfterPrint: () => {
       // Show success toast but don't navigate away
       toast("Resume download initiated", {
         description: "Please check your downloads folder or browser download dialog"
       });
-      
+
       // Show a follow-up toast after a short delay to check if download was successful
       setTimeout(() => {
         toast("Did you get your resume?", {
@@ -753,14 +727,14 @@ const EnhancePage = () => {
         });
       }, 3000);
     },
-    onPrintError: (error) => { 
-      toast("Resume download failed", { 
+    onPrintError: (error) => {
+      toast("Resume download failed", {
         description: "Please try again or check your browser settings.",
         action: {
           label: "Try Again",
           onClick: () => handlePrint()
         }
-      }); 
+      });
     }
   });
 
@@ -856,27 +830,27 @@ const EnhancePage = () => {
           </div>
         </ScrollArea>
         <div className="flex justify-end p-4 gap-2">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="gap-1" 
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1"
             onClick={handleRejectAll}
             disabled={!suggestions.length}
           >
             <XCircle className="h-4 w-4" />
             Ingore All
           </Button>
-          <Button 
-            variant="default" 
-            size="sm" 
-            className="gap-1" 
+          <Button
+            variant="default"
+            size="sm"
+            className="gap-1"
             onClick={handleAcceptAll}
             disabled={!suggestions.length}
           >
             <CheckCircle className="h-4 w-4" />
             Apply All
           </Button>
-         
+
         </div>
       </div>
     );
