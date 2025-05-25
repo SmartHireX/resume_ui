@@ -5,110 +5,24 @@ import { Button } from "@/components/ui/button";
 import { CheckCircle, Download, Loader2, XCircle, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import ResumeUploader from "@/components/ResumeUploader";
-import ResumeSuggestions, { Suggestion } from "@/components/ResumeSuggestions";
+import ResumeSuggestions from "@/components/ResumeSuggestions";
 import ResumePreview from "@/components/ResumePreview";
 import { parseResume, getEnhancementSuggestions } from "@/services/resumeService";
-import html2pdf from "html2pdf.js";
 import { useIsMobile } from "@/hooks/use-mobile";
 import Footer from "@/components/Footer";
 import { useReactToPrint } from 'react-to-print';
 import '../components/PrintStyles.css';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { useNavigate } from 'react-router-dom';
-import { cn } from "@/lib/utils";
-import { Card } from "@/components/ui/card";
-import { IATSScore, IEnhancementSuggestion, IFlexibleResumeData } from "@/interfaces/interfaces";
+import { IATSScore, IDetailedATSScores, IEnhancementSuggestion, IFlexibleResumeData, IImprovedResume } from "@/interfaces/interfaces";
 import { convertToResumeData } from "@/lib/resumeHelpers";
-import { JOB_DESCRIPTION_INFO, PARSE_ERROR, UPLOAD_SUCCESS } from "@/lib/alerts";
+import { ENHANCE_SUGGESTIONS_ERROR, ENHANCE_SUGGESTIONS_INFO, JOB_DESCRIPTION_INFO, PARSE_ERROR, TRY_AGAIN, UPLOAD_SUCCESS } from "@/lib/alerts";
 
-
-// Match the ResumeData interface from ResumePreview component
-interface ResumeData {
-  personalInfo: {
-    name: string;
-    email: string;
-    phone: string;
-    location: string;
-    linkedin?: string;
-    github?: string;
-    website?: string;
-  };
-  summary: string;
-  experience: Array<{
-    title: string;
-    company: string;
-    location: string;
-    duration: string;
-    responsibilities: string[];
-    achievements: string[];
-    technologies: string[];
-  }>;
-  education: Array<{
-    qualification: string;
-    institute: string;
-    duration: string;
-    marks?: string;
-    field_of_study?: string;
-  }>;
-  projects: Array<{
-    name: string;
-    duration: string;
-    summary: string;
-    description: string | null;
-    deliverables: string[];
-    technologies: string[];
-  }>;
-  certifications: Array<{
-    title: string;
-    institution: string;
-    date: string;
-  }>;
-  achievements: string[];
-  skills: {
-    programming_languages: string[];
-    databases: string[];
-    technologies: string[];
-    frameworks: string[];
-    tools: string[];
-    soft_skills: string[];
-    other: string[];
-  };
-  languages_known: string[];
-  publications: string[];
-  awards: string[];
-  volunteer_experience: string[];
-  interests: string[];
-  [key: string]: any;
-}
-
-// Update ATSScore interface to include section breakdown
-interface ATSScores {
-  old: number;
-  new: number;
-  summary?: number;
-  experience?: number;
-  projects?: number;
-  skills?: number;
-  achievements?: number;
-  education?: number;
-  certifications?: number;
-  // Add other potential sections here if needed
-  [key: string]: any; // Allow indexing with string keys for flexibility
-}
-
-const convertApiSuggestionsToAppFormat = (suggestions: IEnhancementSuggestion[]): Suggestion[] => {
-  return suggestions.map(suggestion => ({
-    section: suggestion.section,
-    original: suggestion.original,
-    improved: suggestion.improved,
-    reason: suggestion.reason
-  }));
-};
 
 const DesktopLayout: React.FC<{
   children: React.ReactNode;
   resumePreviewRef: React.RefObject<HTMLDivElement>;
-  resumeData: ResumeData | null;
+  resumeData: IFlexibleResumeData;
   isLoading: boolean;
 }> = ({ children, resumePreviewRef, resumeData, isLoading }) => {
   return (
@@ -139,7 +53,7 @@ const DesktopLayout: React.FC<{
 const MobileLayout: React.FC<{
   children: React.ReactNode;
   resumePreviewRef: React.RefObject<HTMLDivElement>;
-  resumeData: ResumeData | null;
+  resumeData: IFlexibleResumeData;
   isLoading: boolean;
 }> = ({ children, resumePreviewRef, resumeData, isLoading }) => {
   return (
@@ -166,11 +80,9 @@ const MobileLayout: React.FC<{
 };
 
 const EnhancePage = () => {
-  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
-  const [resumeData, setResumeData] = useState<ResumeData | null>(null);
+  const [resumeData, setResumeData] = useState<IFlexibleResumeData>(null);
   const [showEnhancements, setShowEnhancements] = useState(false);
-  const [jobDescription, setJobDescription] = useState("");
-  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+  const [suggestions, setSuggestions] = useState<IEnhancementSuggestion[]>([]);
   const [atsScore, setAtsScore] = useState<IATSScore | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(false);
   const [isGeneratingSuggestions, setIsGeneratingSuggestions] = useState(false);
@@ -182,10 +94,9 @@ const EnhancePage = () => {
   const navigate = useNavigate();
 
   // Keep track of the detailed ATS score breakdown received from the API
-  const [detailedAtsScore, setDetailedAtsScore] = useState<ATSScores | undefined>(undefined);
+  const [detailedAtsScore, setDetailedAtsScore] = useState<IDetailedATSScores>(undefined);
 
   const handleFileUpload = async (file: File) => {
-    setUploadedFile(file);
     setIsLoading(true);
 
     try {
@@ -193,7 +104,7 @@ const EnhancePage = () => {
 
       if (parsedResumeData.status === "success") {
         // Ensure parsedResumeData has the structure expected by ResumePreview
-        const formattedResumeData: ResumeData = convertToResumeData(parsedResumeData.resume_data);
+        const formattedResumeData: IFlexibleResumeData = convertToResumeData(parsedResumeData.resume_data);
         setResumeData(formattedResumeData);
         toast(UPLOAD_SUCCESS, {
           description: JOB_DESCRIPTION_INFO,
@@ -222,7 +133,6 @@ const EnhancePage = () => {
   const handleEnhanceResume = async (jobDesc: string) => {
     if (!resumeData) return;
 
-    setJobDescription(jobDesc);
     setIsGeneratingSuggestions(true);
 
     try {
@@ -247,16 +157,24 @@ const EnhancePage = () => {
         languages_known: resumeData.languages_known
       } as unknown as IFlexibleResumeData;
 
-      const enhancementResponse = await getEnhancementSuggestions(apiResumeData, jobDesc);
-      setSuggestions(convertApiSuggestionsToAppFormat(enhancementResponse.suggestions));
-      setAtsScore(enhancementResponse.atsScore);
-      setDetailedAtsScore(enhancementResponse.atsScore);
-      setShowEnhancements(true);
-      setAllSuggestionsDone(false);
+      const enhancementResponse: IImprovedResume = await getEnhancementSuggestions(apiResumeData, jobDesc);
+
+      if (enhancementResponse.improved_sections.length > 0) {
+        setSuggestions(enhancementResponse.improved_sections);
+        setAtsScore(enhancementResponse.ats_score);
+        setDetailedAtsScore(enhancementResponse.ats_score);
+        setShowEnhancements(true);
+        setAllSuggestionsDone(false);
+      } else {
+        console.warn(ENHANCE_SUGGESTIONS_INFO);
+        toast(ENHANCE_SUGGESTIONS_INFO, {
+          description: TRY_AGAIN,
+        });
+      }
     } catch (error) {
-      console.error("Error generating suggestions:", error);
-      toast("Error generating suggestions", {
-        description: "Please try again",
+      console.error(ENHANCE_SUGGESTIONS_ERROR, error);
+      toast(ENHANCE_SUGGESTIONS_ERROR, {
+        description: TRY_AGAIN,
       });
     } finally {
       setIsGeneratingSuggestions(false);
@@ -267,24 +185,21 @@ const EnhancePage = () => {
     if (!resumeData) return;
 
     const suggestion = suggestions[index];
-    console.log("Applying suggestion:", suggestion);
-
     const updatedResumeData = { ...resumeData };
 
     switch (suggestion.section.toLowerCase()) {
       case "summary":
-        if (suggestion.improved) {
+        if (suggestion.improved)
           updatedResumeData.summary = suggestion.improved;
-        }
         break;
+
       case "experience":
         // Handle experience improvements
         if (typeof suggestion.original === 'object' && typeof suggestion.improved === 'object' && suggestion.improved !== null) {
-          console.log("Original experience:", suggestion.original);
-          console.log("Improved experience:", suggestion.improved);
 
           // Check if the experience data is an array (multiple entries)
           if (Array.isArray(suggestion.improved)) {
+
             // Replace all experience entries with the improved ones
             updatedResumeData.experience = suggestion.improved.map((improvExp: any) => ({
               title: improvExp.title || "",
@@ -295,7 +210,7 @@ const EnhancePage = () => {
               achievements: Array.isArray(improvExp.achievements) ? improvExp.achievements : [],
               technologies: Array.isArray(improvExp.technologies) ? improvExp.technologies : []
             }));
-            console.log("Updated all experience entries", updatedResumeData.experience);
+
           } else {
             // Single experience object
             const origExp = suggestion.original as any;
@@ -332,10 +247,9 @@ const EnhancePage = () => {
               }
 
               updatedResumeData.experience[expIndex] = updatedExp;
-              console.log("Updated experience:", updatedResumeData.experience[expIndex]);
+
             } else {
               // If experience not found but we have complete data, create a new entry
-              console.log("Experience not found, creating new entry if possible");
               if (improvedExp.title && improvedExp.company && improvedExp.duration) {
                 const newExp = {
                   title: improvedExp.title,
@@ -347,18 +261,15 @@ const EnhancePage = () => {
                   technologies: Array.isArray(improvedExp.technologies) ? improvedExp.technologies : []
                 };
                 updatedResumeData.experience.push(newExp);
-                console.log("Added new experience:", newExp);
               }
             }
           }
         }
         break;
+
       case "skills":
         // Handle skills category improvements
         if (typeof suggestion.original === 'object' && typeof suggestion.improved === 'object' && suggestion.improved !== null) {
-          console.log("Original skills:", suggestion.original);
-          console.log("Improved skills:", suggestion.improved);
-
           const improvedSkills = suggestion.improved as any;
 
           // Check that improvedSkills has the expected properties
@@ -381,19 +292,17 @@ const EnhancePage = () => {
                 updatedResumeData.skills[category] = [...improvedSkills[category]];
               }
             });
-
-            console.log("Updated skills:", updatedResumeData.skills);
           }
         }
         break;
+
       case "projects":
         // Handle project improvements
         if (typeof suggestion.original === 'object' && typeof suggestion.improved === 'object' && suggestion.improved !== null) {
-          console.log("Original project:", suggestion.original);
-          console.log("Improved project:", suggestion.improved);
 
           // Check if the project data is an array
           if (Array.isArray(suggestion.improved)) {
+
             // Replace all projects with the improved ones
             updatedResumeData.projects = suggestion.improved.map((proj: any) => ({
               name: proj.name || "",
@@ -403,7 +312,6 @@ const EnhancePage = () => {
               deliverables: Array.isArray(proj.deliverables) ? proj.deliverables : [],
               technologies: Array.isArray(proj.technologies) ? proj.technologies : []
             }));
-            console.log("Updated all projects", updatedResumeData.projects);
           } else {
             // Single project object
             const origProject = suggestion.original as any;
@@ -426,16 +334,14 @@ const EnhancePage = () => {
                 deliverables: Array.isArray(improvedProject.deliverables) ? improvedProject.deliverables : existingProject.deliverables,
                 technologies: Array.isArray(improvedProject.technologies) ? improvedProject.technologies : existingProject.technologies
               };
-              console.log("Updated project:", updatedResumeData.projects[projectIndex]);
             }
           }
         }
         break;
+
       case "education":
         // Handle education improvements
         if (typeof suggestion.original === 'object' && typeof suggestion.improved === 'object' && suggestion.improved !== null) {
-          console.log("Original education:", suggestion.original);
-          console.log("Improved education:", suggestion.improved);
 
           // Check if the education data is an array
           if (Array.isArray(suggestion.improved)) {
@@ -447,7 +353,6 @@ const EnhancePage = () => {
               marks: edu.marks || "",
               field_of_study: edu.field_of_study || ""
             }));
-            console.log("Updated all education entries", updatedResumeData.education);
           } else {
             // Single education object
             const origEdu = suggestion.original as any;
@@ -470,11 +375,11 @@ const EnhancePage = () => {
                 marks: improvedEdu.marks || existingEdu.marks || "",
                 field_of_study: improvedEdu.field_of_study || existingEdu.field_of_study || ""
               };
-              console.log("Updated education:", updatedResumeData.education[eduIndex]);
             }
           }
         }
         break;
+
       default:
         // For any other section, attempt to directly update it if it exists
         if (updatedResumeData[suggestion.section.toLowerCase()] && suggestion.improved) {

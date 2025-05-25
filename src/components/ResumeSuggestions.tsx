@@ -3,13 +3,7 @@ import { Card } from "@/components/ui/card";
 import { CheckCircle, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
-
-export interface Suggestion {
-  original: string | any;
-  improved: string | any;
-  reason: string;
-  section: string;
-}
+import { IEnhancementSuggestion, ResumeSuggestionsProps } from "@/interfaces/interfaces";
 
 // Helper function to render complex objects (like skills)
 const renderContent = (content: any): React.ReactNode => {
@@ -237,14 +231,9 @@ const capitalizeWords = (str: string): string => {
     .join(' ');
 };
 
-interface ResumeSuggestionsProps {
-  suggestions: Suggestion[];
-  onAcceptSuggestion?: (index: number) => void;
-  onRejectSuggestion?: (index: number) => void;
-}
 
 const MobileSuggestion: React.FC<{
-  suggestion: Suggestion;
+  suggestion: IEnhancementSuggestion;
   index: number;
   onAccept: (index: number) => void;
   onReject: (index: number) => void;
@@ -300,7 +289,7 @@ const MobileSuggestion: React.FC<{
 };
 
 const DesktopSuggestion: React.FC<{
-  suggestion: Suggestion;
+  suggestion: IEnhancementSuggestion;
   index: number;
   onAccept: (index: number) => void;
   onReject: (index: number) => void;

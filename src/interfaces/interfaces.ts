@@ -1,3 +1,17 @@
+export interface IDetailedATSScores {
+  [key: string]: any; // Allow indexing with string keys for flexibility
+  old: number;
+  new: number;
+  summary?: number;
+  experience?: number;
+  projects?: number;
+  skills?: number;
+  achievements?: number;
+  education?: number;
+  certifications?: number;
+  // Add other potential sections here if needed
+}
+
 export interface IPersonalInfo {
   [key: string]: string | undefined;
   name: string;
@@ -53,7 +67,7 @@ export interface ISkillsInfo {
   tools: string[];
   soft_skills: string[];
   other: string[];
-}
+};
 
 export interface IFlexibleResumeData {
   [key: string]: any;
@@ -70,23 +84,31 @@ export interface IFlexibleResumeData {
   awards?: string[];
   volunteer_experience?: string[];
   interests?: string[];
-}
+};
 
 export interface IEnhancementSuggestion {
   section: string;
   original: string | any;
   improved: string | any;
   reason: string;
-}
+};
 
 export interface IATSScore {
   old: number;
   new: number;
-}
+};
+
+export interface IImprovedResume {
+  improved_sections: IEnhancementSuggestion[];
+  ats_score: IATSScore;
+};
 
 export interface IEnhancementResponse {
-  improved_resume: {
-    improved_sections: IEnhancementSuggestion[];
-    ats_score: IATSScore;
-  }
+  improved_resume: IImprovedResume
+};
+
+export interface ResumeSuggestionsProps {
+  suggestions: IEnhancementSuggestion[];
+  onAcceptSuggestion?: (index: number) => void;
+  onRejectSuggestion?: (index: number) => void;
 }
