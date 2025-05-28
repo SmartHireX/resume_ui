@@ -8,15 +8,116 @@
   .resume-preview {
     height: auto !important;
     overflow: visible !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+    border-radius: 0 !important;
   }
 
-  /* Optionally, hide unwanted elements for the print */
+  /* Hide unwanted elements for the print */
   .no-print {
     display: none !important;
   }
 
-  /* Adjust background if needed */
-  body {
-    background-color: #ffffff; /* or any color you want for the print */
+  /* Hide template selector specifically */
+  .template-selector,
+  [data-testid="template-selector"] {
+    display: none !important;
+  }
+
+  /* Hide any radio buttons or form controls */
+  input[type="radio"],
+  .radio-group,
+  .template-options {
+    display: none !important;
+  }
+
+  /* Remove all background colors and borders from containers */
+  .description-side,
+  .upload-side,
+  .split-layout,
+  .bg-muted,
+  .bg-card,
+  .bg-background,
+  .bg-secondary,
+  .bg-muted\/30,
+  [class*="bg-muted"],
+  [class*="bg-card"],
+  [class*="bg-background"] {
+    background: transparent !important;
+    background-color: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+
+  /* Ensure the main body and containers are white */
+  body,
+  html,
+  * {
+    background-color: #ffffff !important;
+  }
+
+  /* Specifically target the resume content area */
+  .resume-preview > *,
+  .resume-preview div {
+    background: transparent !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+  }
+
+  /* Force all containers to be transparent except resume content */
+  div:not(.bg-white):not([class*="bg-white"]) {
+    background: transparent !important;
+    background-color: transparent !important;
+  }
+
+  /* Ensure proper text rendering */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+
+  /* Hide any interactive elements */
+  button,
+  .button,
+  .btn {
+    display: none !important;
+  }
+
+  /* Ensure proper page breaks */
+  .page-break {
+    page-break-before: always;
+  }
+
+  .avoid-break {
+    page-break-inside: avoid;
+  }
+
+  /* Remove any padding/margin from containers that might cause color issues */
+  .description-side,
+  .upload-side {
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* Ensure the template content maintains its white background */
+  .bg-white {
+    background-color: #ffffff !important;
+  }
+
+  /* Remove shadows and borders from all elements */
+  * {
+    box-shadow: none !important;
+    border-radius: 0 !important;
+  }
+
+  /* Specifically target elements that might have background colors */
+  .rounded-lg,
+  .shadow-sm,
+  .border {
+    background: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+    border-radius: 0 !important;
   }
 }

@@ -107,7 +107,8 @@ const DesktopLayout: React.FC<{
   resumePreviewRef: React.RefObject<HTMLDivElement>;
   resumeData: ResumeData | null;
   isLoading: boolean;
-}> = ({ children, resumePreviewRef, resumeData, isLoading }) => {
+  isDownloading: boolean;
+}> = ({ children, resumePreviewRef, resumeData, isLoading, isDownloading }) => {
   return (
     <section className="split-layout">
       <div className="description-side bg-muted/30 p-8">
@@ -119,7 +120,7 @@ const DesktopLayout: React.FC<{
                 <span className="ml-2 text-sm">Parsing resume...</span>
               </div>
             ) : (
-              <ResumePreview resumeData={resumeData as any} />
+              <ResumePreview resumeData={resumeData as any} isDownloading={isDownloading} />
             )}
           </div>
         </div>
@@ -138,7 +139,8 @@ const MobileLayout: React.FC<{
   resumePreviewRef: React.RefObject<HTMLDivElement>;
   resumeData: ResumeData | null;
   isLoading: boolean;
-}> = ({ children, resumePreviewRef, resumeData, isLoading }) => {
+  isDownloading: boolean;
+}> = ({ children, resumePreviewRef, resumeData, isLoading, isDownloading }) => {
   return (
     <section className="flex flex-col">
       <div className="p-2 bg-muted/30 border-b border-border/50">
@@ -149,7 +151,7 @@ const MobileLayout: React.FC<{
               <span className="text-xs">Parsing resume...</span>
             </div>
           ) : (
-            <ResumePreview resumeData={resumeData as any} />
+            <ResumePreview resumeData={resumeData as any} isDownloading={isDownloading} />
           )}
         </div>
       </div>
@@ -172,6 +174,7 @@ const EnhancePage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isGeneratingSuggestions, setIsGeneratingSuggestions] = useState(false);
   const [allSuggestionsDone, setAllSuggestionsDone] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
   const resumePreviewRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -735,8 +738,12 @@ const EnhancePage = () => {
     documentTitle: resumeData?.personalInfo?.name 
       ? `${resumeData.personalInfo.name.split(' ')[0]}'s Enhanced Resume` 
       : "Enhanced Resume",
-    onBeforeGetContent: () => { toast("Preparing for download..."); },
+    onBeforeGetContent: () => { 
+      setIsDownloading(true);
+      toast("Preparing for download..."); 
+    },
     onAfterPrint: () => { 
+      setIsDownloading(false);
       // Show success toast but don't navigate away
       toast("Resume download initiated", {
         description: "Please check your downloads folder or browser download dialog"
@@ -754,6 +761,7 @@ const EnhancePage = () => {
       }, 3000);
     },
     onPrintError: (error) => { 
+      setIsDownloading(false);
       toast("Resume download failed", { 
         description: "Please try again or check your browser settings.",
         action: {
@@ -891,6 +899,7 @@ const EnhancePage = () => {
             resumePreviewRef={resumePreviewRef}
             resumeData={resumeData}
             isLoading={isLoading}
+            isDownloading={isDownloading}
           >
             {renderContent()}
           </MobileLayout>
@@ -899,6 +908,7 @@ const EnhancePage = () => {
             resumePreviewRef={resumePreviewRef}
             resumeData={resumeData}
             isLoading={isLoading}
+            isDownloading={isDownloading}
           >
             {renderContent()}
           </DesktopLayout>
