@@ -17,6 +17,8 @@ import { useNavigate } from 'react-router-dom';
 import { IATSScore, IDetailedATSScores, IEnhancementSuggestion, IFlexibleResumeData, IImprovedResume } from "@/interfaces/interfaces";
 import { convertToResumeData } from "@/lib/resumeHelpers";
 import { ENHANCE_SUGGESTIONS_ERROR, ENHANCE_SUGGESTIONS_INFO, JOB_DESCRIPTION_INFO, PARSE_ERROR, TRY_AGAIN, UPLOAD_SUCCESS } from "@/lib/alerts";
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
 
 
 const DesktopLayout: React.FC<{
@@ -643,6 +645,33 @@ const EnhancePage = () => {
     }
   });
 
+  // Fallback download for mobile devices using html2canvas and jsPDF
+  const handleDownload = async () => {
+    if (isMobile) {
+      if (resumePreviewRef.current) {
+        try {
+          const canvas = await html2canvas(resumePreviewRef.current);
+          const imgData = canvas.toDataURL('image/png');
+          const pdf = new jsPDF('p', 'mm', 'a4');
+          const { width: pdfWidth } = pdf.internal.pageSize;
+          const imgProps = pdf.getImageProperties(imgData);
+          const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+          pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+          const fileName = resumeData?.personalInfo?.name
+            ? `${resumeData.personalInfo.name.split(' ')[0]}-Resume.pdf`
+            : 'resume.pdf';
+          pdf.save(fileName);
+          toast('Resume download initiated', { description: 'Please check your downloads folder' });
+        } catch (error) {
+          console.error('Download PDF error:', error);
+          toast('Resume download failed', { description: 'Please try again' });
+        }
+      }
+    } else {
+      handlePrint();
+    }
+  };
+
   const renderContent = () => {
     if (allSuggestionsDone) {
       return (
@@ -682,7 +711,7 @@ const EnhancePage = () => {
           <Button
             variant="default"
             className="gap-2 text-sm sm:text-base w-full sm:w-auto mt-4"
-            onClick={() => handlePrint()}
+            onClick={handleDownload}
           >
             <Download className="h-4 w-4 sm:h-5 sm:w-5" />
             Download Enhanced Resume

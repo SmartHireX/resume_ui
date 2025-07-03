@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { FileSpreadsheet, Menu, X, AlignJustify } from "lucide-react";
+import { FileSpreadsheet, Menu, X, AlignJustify, Briefcase } from "lucide-react";
 import { Chip, LinearProgress, Box, Tooltip } from "@mui/material";
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
@@ -84,7 +84,17 @@ const Header = () => {
         {mobileMenuOpen && (
           <div className="md:hidden fixed top-[53px] left-0 right-0 bg-card z-50 shadow-lg border-b animate-fade-in max-h-[calc(100vh-53px)] overflow-y-auto">
             <nav className="flex flex-col py-4">
-              <div className="px-6 py-3 mt-2">
+              <div className="px-6 py-3 space-y-3">
+                <Link 
+                  to="/job-search"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="w-full"
+                >
+                  <Button variant="outline" size="sm" className="w-full">
+                    <Briefcase className="h-4 w-4 mr-2" />
+                    Apply for Job
+                  </Button>
+                </Link>
                 <Link 
                   to="/enhance"
                   onClick={() => setMobileMenuOpen(false)}
